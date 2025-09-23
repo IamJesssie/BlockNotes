@@ -1,13 +1,36 @@
 from django.db import models
+from django.core.validators import MinLengthValidator
 
 class Note(models.Model):
-    title = models.CharField(max_length=255)
-    content = models.TextField()
+    title = models.CharField(
+        max_length=255, 
+        validators=[MinLengthValidator(1, "Title cannot be empty")]
+    )
+    content = models.TextField(
+        validators=[MinLengthValidator(1, "Content cannot be empty")]
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Note"
+        verbose_name_plural = "Notes"
+        indexes = [
+            models.Index(fields=['created_at']),
+            models.Index(fields=['title']),
+        ]
+
     def __str__(self):
         return self.title
+    
+    @property
+    def character_count(self):
+        return len(self.content)
+    
+    @property 
+    def has_blockchain_receipt(self):
+        return hasattr(self, 'blockchain_receipt')
 
 
 class BlockchainReceipt(models.Model):
