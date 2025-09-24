@@ -23,6 +23,16 @@
         </div>
     </nav>
 
+    <div id="blockchain-status">
+        <strong>Blockchain Status:</strong>
+        {% if blockchain_status %}
+            <span class="connected" style="color: green;">Connected ✅</span>
+        {% else %}
+            <span class="offline" style="color: red;">Offline ❌</span>
+        {% endif %}
+    </div>
+
+    
     <div class="container mt-4">
         <div id="notesContainer">
             {% for note in notes %}
