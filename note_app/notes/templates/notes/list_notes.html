@@ -32,6 +32,26 @@
         {% endif %}
     </div>
 
+        <div class="container mt-3">
+        <div class="d-flex justify-content-end mb-3">
+            <a href="?sort=-created_at{% if search_query %}&q={{ search_query }}{% endif %}" 
+               class="btn btn-sm btn-outline-primary me-2 {% if sort_by == '-created_at' %}active{% endif %}">
+                Newest First
+            </a>
+            <a href="?sort=created_at{% if search_query %}&q={{ search_query }}{% endif %}" 
+               class="btn btn-sm btn-outline-primary me-2 {% if sort_by == 'created_at' %}active{% endif %}">
+                Oldest First
+            </a>
+            <a href="?sort=title{% if search_query %}&q={{ search_query }}{% endif %}" 
+               class="btn btn-sm btn-outline-secondary me-2 {% if sort_by == 'title' %}active{% endif %}">
+                A–Z
+            </a>
+            <a href="?sort=-title{% if search_query %}&q={{ search_query }}{% endif %}" 
+               class="btn btn-sm btn-outline-secondary {% if sort_by == '-title' %}active{% endif %}">
+                Z–A
+            </a>
+        </div>
+    </div>
     
     <div class="container mt-4">
         <div id="notesContainer">
