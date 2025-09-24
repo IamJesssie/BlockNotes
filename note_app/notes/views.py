@@ -25,13 +25,30 @@ def get_blockchain_status():
         return False
     
 def list_notes(request):
-    notes = Note.objects.all().order_by('-created_at')
-    blockchain_status = get_blockchain_status()  # Use helper
-    return render(request, 'notes/list_notes.html', {
-        'notes': notes,
-        'blockchain_status': blockchain_status
-    })
+    # Get query params
+    sort_by = request.GET.get("sort", "-created_at")  # default: newest first
+    search_query = request.GET.get("q", "")
 
+    # Only allow safe sorting fields
+    valid_sort_fields = ["created_at", "-created_at", "title", "-title"]
+    if sort_by not in valid_sort_fields:
+        sort_by = "-created_at"
+
+    # Get notes queryset
+    notes = Note.objects.all().order_by(sort_by)
+
+    # Apply search filter if provided
+    if search_query:
+        notes = notes.filter(title__icontains=search_query) | notes.filter(content__icontains=search_query)
+
+    blockchain_status = get_blockchain_status()
+
+    return render(request, "notes/list_notes.html", {
+        "notes": notes,
+        "blockchain_status": blockchain_status,
+        "search_query": search_query,
+        "sort_by": sort_by
+    })
 
 
 def create_note_view(request):
