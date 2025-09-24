@@ -5,9 +5,39 @@ from web3 import Web3
 import hashlib
 import logging
 
-# Logging
 logger = logging.getLogger(__name__)
 
+# Blockchain connectivity check
+def get_blockchain_status():
+    try:
+        w3 = Web3(Web3.HTTPProvider('http://127.0.0.1:8545'))
+        return w3.is_connected()
+    except Exception as e:
+        logger.error(f"Blockchain connection error: {e}")
+        return False
+
+# LIST
+def list_notes(request):
+    sort_by = request.GET.get("sort", "-created_at")  
+    search_query = request.GET.get("q", "")
+
+    valid_sort_fields = ["created_at", "-created_at", "title", "-title"]
+    if sort_by not in valid_sort_fields:
+        sort_by = "-created_at"
+
+    notes = Note.objects.all().order_by(sort_by)
+
+    if search_query:
+        notes = notes.filter(title__icontains=search_query) | notes.filter(content__icontains=search_query)
+
+    blockchain_status = get_blockchain_status()
+
+    return render(request, "notes/list_notes.html", {
+        "notes": notes,
+        "blockchain_status": blockchain_status,
+        "search_query": search_query,
+        "sort_by": sort_by
+    })
 
 # CREATE
 def create_note_view(request):
@@ -19,38 +49,23 @@ def create_note_view(request):
             if not title or not content:
                 return JsonResponse({'success': False, 'error': 'Title and content are required'})
 
-            # Save note in DB
             note = Note.objects.create(title=title, content=content)
             logger.info(f"Note created with ID: {note.id}")
 
-            # Blockchain integration
             try:
                 w3 = Web3(Web3.HTTPProvider('http://127.0.0.1:8545'))
 
                 if not w3.is_connected():
-                    logger.warning("Blockchain not connected")
-                    return JsonResponse({
-                        'success': True,
-                        'note_id': note.id,
-                        'message': 'Note saved (blockchain offline)'
-                    })
+                    return JsonResponse({'success': True, 'note_id': note.id, 'message': 'Note saved (blockchain offline)'})
 
                 accounts = w3.eth.accounts
                 if not accounts:
-                    logger.warning("No blockchain accounts available")
-                    return JsonResponse({
-                        'success': True,
-                        'note_id': note.id,
-                        'message': 'Note saved (no blockchain accounts)'
-                    })
+                    return JsonResponse({'success': True, 'note_id': note.id, 'message': 'Note saved (no blockchain accounts)'})
 
                 from_account = accounts[0]
-
-                # Hash note
                 note_string = f"{note.id}:{note.title}:{note.content}"
                 note_hash = hashlib.sha256(note_string.encode('utf-8')).hexdigest()
 
-                # Prepare txn
                 txn = {
                     'from': from_account,
                     'to': from_account,
@@ -59,7 +74,7 @@ def create_note_view(request):
                     'gas': 50000,
                     'gasPrice': w3.to_wei('20', 'gwei'),
                     'nonce': w3.eth.get_transaction_count(from_account),
-                    'chainId': 1337,  # Ganache default
+                    'chainId': 1337,
                 }
 
                 tx_hash = w3.eth.send_transaction(txn)
@@ -72,10 +87,8 @@ def create_note_view(request):
                         block_number=receipt.blockNumber,
                         hash_value=note_hash
                     )
-                    logger.info(f"Blockchain receipt created for note {note.id}")
                     return JsonResponse({'success': True, 'note_id': note.id, 'tx_hash': tx_hash.hex()})
                 else:
-                    logger.error(f"Blockchain transaction failed for note {note.id}")
                     return JsonResponse({'success': True, 'note_id': note.id, 'message': 'Note saved (blockchain txn failed)'})
 
             except Exception as blockchain_error:
@@ -88,13 +101,6 @@ def create_note_view(request):
 
     return render(request, 'notes/create_note.html')
 
-
-# LIST
-def list_notes(request):
-    notes = Note.objects.all().order_by('-created_at')
-    return render(request, 'notes/list_notes.html', {'notes': notes})
-
-
 # EDIT
 def edit_note(request, note_id):
     note = get_object_or_404(Note, id=note_id)
@@ -105,7 +111,6 @@ def edit_note(request, note_id):
         return JsonResponse({'success': True, 'note': {'title': note.title, 'content': note.content}})
     return JsonResponse({'success': False, 'error': 'Invalid request'})
 
-
 # DELETE
 def delete_note(request, note_id):
     note = get_object_or_404(Note, id=note_id)
@@ -113,7 +118,6 @@ def delete_note(request, note_id):
         note.delete()
         return JsonResponse({'success': True})
     return JsonResponse({'success': False, 'error': 'Invalid request'})
-
 
 # VERIFY RECEIPT
 def verify_receipt(request, note_id):
@@ -125,12 +129,10 @@ def verify_receipt(request, note_id):
 
     try:
         w3 = Web3(Web3.HTTPProvider('http://127.0.0.1:8545'))
-
         tx_hash = receipt.transaction_hash
         tx_receipt = w3.eth.get_transaction_receipt(tx_hash)
         tx = w3.eth.get_transaction(tx_hash)
 
-        # Recompute hash
         note_string = f"{note.id}:{note.title}:{note.content}"
         computed_hash = hashlib.sha256(note_string.encode('utf-8')).hexdigest()
         hash_match = receipt.hash_value == computed_hash

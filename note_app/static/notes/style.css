@@ -280,12 +280,57 @@ body {
 
 
 #mainPane {
-  height: calc(100vh - 70px); /* Same height as sidebar */
+  height: calc(95vh - 70px); /* Same height as sidebar */
   overflow-y: auto;           /* Scroll only inside main pane */
 }
 
 #mainPane {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+#noteTitle {
+  font-size: 4rem;   /* bigger */
+  font-weight: 800;  /* extra bold */
+  color: #ffffff;    /* keeps contrast on dark header */
+}
+
+#noteContent {
+  font-size: 1.8rem;  /* slightly bigger than normal */
+  line-height: 1.6;   /* improve readability */
+  white-space: pre-wrap; /* keep line breaks */
+  word-wrap: break-word; /* wrap long words */
+  color: #f1f1f1;
+}
+
+/* Darker header divider */
+.note-header {
+  border-bottom: 2px solid #f1f1f1;
+}
+
+#emptyState {
+  color: #999;
+  font-style: italic;
+}
+
+/* Edit Mode Title */
+#editTitle {
+  font-size: 2rem;       /* Bigger input text */
+  font-weight: 700;      /* Bold title */
+  padding: 0.75rem 1rem; /* Larger padding */
+}
+
+/* Edit Mode Content */
+#editContent {
+  font-size: 1.4rem;     /* Larger textarea text */
+  line-height: 1.6;      /* More readable spacing */
+  padding: 1rem;         /* More padding inside textarea */
+}
+
+#noteEdit label,
+#noteEdit .form-label {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #e2e8f0;
 }
 
