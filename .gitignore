@@ -1,3 +1,15 @@
+venv/
+
+# Django stuff
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+
+# Logs
+*.log
+=======
 # Python
 __pycache__/
 *.py[cod]
@@ -49,4 +61,3 @@ node_modules/
 npm-debug.log*
 
 # Database
-*.db

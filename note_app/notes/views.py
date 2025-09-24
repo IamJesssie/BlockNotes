@@ -9,6 +9,31 @@ import logging
 # Set up logging
 logger = logging.getLogger(__name__)
 
+def get_blockchain_status():
+    """
+    Checks if Ganache is running and accessible.
+    Returns True if connected, False if not.
+    """
+    try:
+        w3 = Web3(Web3.HTTPProvider('http://127.0.0.1:8545'))
+        return w3.is_connected()
+    except Exception as e:
+        # Optional: log error for debugging
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Blockchain connection error: {e}")
+        return False
+    
+def list_notes(request):
+    notes = Note.objects.all().order_by('-created_at')
+    blockchain_status = get_blockchain_status()  # Use helper
+    return render(request, 'notes/list_notes.html', {
+        'notes': notes,
+        'blockchain_status': blockchain_status
+    })
+
+
+
 def create_note_view(request):
     if request.method == 'POST':
         try:
@@ -24,18 +49,18 @@ def create_note_view(request):
             logger.info(f"Note created with ID: {note.id}")
             
             # Try blockchain integration
-            try:
+            try:    
                 w3 = Web3(Web3.HTTPProvider('http://127.0.0.1:8545'))
                 
                 if not w3.is_connected():
-                    logger.warning("Blockchain not connected, saving note without receipt")
-                    return JsonResponse({'success': True, 'note_id': note.id, 'message': 'Note saved (blockchain offline)'})
+                    logger.warning("Blockchain not connected")
+                    return JsonResponse({'success': True, 'note_id': note.id, 'message': 'Note saved locally because blockchain is offline.'})
                 
                 # Get accounts from Ganache
                 accounts = w3.eth.accounts
                 if not accounts:
                     logger.warning("No blockchain accounts available")
-                    return JsonResponse({'success': True, 'note_id': note.id, 'message': 'Note saved (no blockchain accounts)'})
+                    return JsonResponse({'success': True, 'note_id': note.id, 'message': 'Note saved locally because no blockchain accounts are available.'})
                 
                 from_account = accounts[0]
                 
@@ -90,9 +115,7 @@ def create_note_view(request):
     
     return render(request, 'notes/create_note.html')
 
-def list_notes(request):
-    notes = Note.objects.all().order_by('-created_at')
-    return render(request, 'notes/list_notes.html', {'notes': notes})
+
 
 def edit_note(request, note_id):
     note = get_object_or_404(Note, id=note_id)
