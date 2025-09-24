@@ -2,242 +2,191 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notes</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="{% static 'notes/style.css' %}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notes</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="{% static 'notes/style.css' %}">
 </head>
 <body>
-    <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg">
-        <div class="container-fluid">
-            <div class="d-flex align-items-center me-auto">
-                <form class="d-flex me-3">
-                    <input class="form-control search-input" type="search" placeholder="Search notes..." id="searchInput">
-                </form>
-                <a class="navbar-brand text-white fw-bold" href="#">Notes</a>
-            </div>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">+ New Note</button>
-        </div>
-    </nav>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg">
+    <div class="container-fluid">
+      <div class="d-flex align-items-center me-auto">
+        <form class="d-flex me-3">
+          <input class="form-control search-input" type="search" placeholder="Search notes..." id="searchInput">
+        </form>
+        <a class="navbar-brand text-white fw-bold" href="#">Notes</a>
+      </div>
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">+ New Note</button>
+    </div>
+  </nav>
 
-    <div class="container mt-4">
-        <div id="notesContainer">
-            {% for note in notes %}
-            {% if forloop.counter0|divisibleby:2 %}<div class="row mb-3">{% endif %}
-            <div class="col-md-6">
-                <div class="note-card h-100" data-title="{{ note.title|lower }}" data-content="{{ note.content|lower }}">
-                    <h3 class="note-title">{{ note.title }}</h3>
-                    <p class="note-content-preview">{{ note.content|truncatechars:100 }}</p>
-                    <p class="note-timestamp">{{ note.created_at|date:"M d, Y H:i" }}</p>
-                    <div class="note-actions">
-                        <button class="btn btn-edit btn-sm me-2" data-note-id="{{ note.id }}" data-note-title="{{ note.title }}" data-note-content="{{ note.content }}">Edit</button>
-                        <button class="btn btn-delete btn-sm me-2" data-note-id="{{ note.id }}" data-note-title="{{ note.title }}">Delete</button>
-                        {% if note.blockchain_receipt %}
-                        <a href="{% url 'verify_receipt' note.id %}" class="btn btn-receipt btn-sm" target="_blank">Receipt</a>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            {% if forloop.counter|divisibleby:2 %}</div>{% endif %}
-            {% empty %}
-            <div class="empty-state text-center">
-                <i class="bi bi-folder display-1 text-muted mb-3"></i>
-                <h4 class="text-muted">No notes yet</h4>
-                <p class="text-muted">Create your first note to get started</p>
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">Create Note</button>
-            </div>
-            {% endfor %}
-            {% if notes and notes|length|add:-1|divisibleby:2 == false %}</div>{% endif %}
+  <!-- Split layout -->
+  <div class="container-fluid mt-4">
+    <div class="row">
+      <!-- Sidebar (scrollable) -->
+      <div class="col-md-3 border-end" id="sidebar">
+        {% for note in notes %}
+        <div class="note-item p-3 border-bottom" data-note-id="{{ note.id }}" 
+             data-title="{{ note.title }}" data-content="{{ note.content }}">
+          <h6 class="fw-bold">{{ note.title }}</h6>
+          <p class="small text-muted mb-1">{{ note.content|truncatechars:50 }}</p>
+          <span class="small text-secondary">{{ note.created_at|date:"M d, Y H:i" }}</span>
+        </div>
+        {% empty %}
+        <p class="text-muted">No notes yet. Create one!</p>
+        {% endfor %}
+      </div>
+
+      <!-- Main Pane -->
+      <div class="col-md-9" id="mainPane">
+    <!-- View Mode -->
+    <div id="noteView" class="text-light">
+        <div class="note-header d-flex justify-content-between align-items-start p-3">
+        <h2 id="noteTitle" class="fw-bold me-2"></h2>
+        <div>
+            <button id="editBtn" class="btn btn-warning btn-sm me-2 d-none">Edit</button>
+            <button id="deleteBtn" class="btn btn-danger btn-sm d-none">Delete</button>
+        </div>
+        </div>
+        <div class="note-body p-4">
+        <p id="noteContent" class="note-content"></p>
         </div>
     </div>
 
-    <!-- Create Modal -->
-    <div class="modal fade" id="createModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Create New Note</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <form method="POST" action="{% url 'create_note' %}">
-                    {% csrf_token %}
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="createTitle" class="form-label">Title</label>
-                            <input type="text" class="form-control" id="createTitle" name="title" placeholder="Enter note title" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="createContent" class="form-label">Content</label>
-                            <textarea class="form-control" id="createContent" name="content" rows="5" placeholder="Write your note..." required></textarea>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Create Note</button>
-                    </div>
-                </form>
+        <!-- Edit Mode -->
+        <div id="noteEdit" class="p-4 d-none">
+          <form method="POST" id="editForm">
+            {% csrf_token %}
+            <input type="hidden" id="editNoteId" name="note_id">
+            <div class="mb-3">
+              <input type="text" class="form-control" id="editTitle" name="title" required>
             </div>
-        </div>
-    </div>
-
-    <!-- Edit Modal -->
-    <div class="modal fade" id="editModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Edit Note</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <form method="POST" id="editForm">
-                    {% csrf_token %}
-                    <input type="hidden" id="editNoteId" name="note_id">
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="editTitle" class="form-label">Title</label>
-                            <input type="text" class="form-control" id="editTitle" name="title" placeholder="Enter note title" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="editContent" class="form-label">Content</label>
-                            <textarea class="form-control" id="editContent" name="content" rows="5" placeholder="Write your note..." required></textarea>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Update Note</button>
-                    </div>
-                </form>
+            <div class="mb-3">
+              <textarea class="form-control" id="editContent" name="content" rows="10" required></textarea>
             </div>
+            <button type="submit" class="btn btn-primary me-2">Save</button>
+            <button type="button" class="btn btn-secondary" id="cancelEdit">Cancel</button>
+          </form>
         </div>
+      </div>
     </div>
+  </div>
 
-    <!-- Delete Modal -->
-    <div class="modal fade" id="deleteModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title text-danger">Delete Note</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Are you sure you want to delete the note "<span id="deleteTitle"></span>"?</p>
-                </div>
-                <form method="POST" id="deleteForm">
-                    {% csrf_token %}
-                    <input type="hidden" id="deleteNoteId" name="note_id">
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-danger">Yes, Delete</button>
-                    </div>
-                </form>
+  <!-- Create Modal -->
+  <div class="modal fade" id="createModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Create New Note</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form method="POST" action="{% url 'create_note' %}">
+          {% csrf_token %}
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="createTitle" class="form-label">Title</label>
+              <input type="text" class="form-control" id="createTitle" name="title" required>
             </div>
-        </div>
+            <div class="mb-3">
+              <label for="createContent" class="form-label">Content</label>
+              <textarea class="form-control" id="createContent" name="content" rows="5" required></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Create Note</button>
+          </div>
+        </form>
+      </div>
     </div>
+  </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Search functionality
-        document.getElementById('searchInput').addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const cards = document.querySelectorAll('.note-card');
-            const emptyState = document.querySelector('.empty-state');
-            let visibleCount = 0;
-            cards.forEach(card => {
-                const title = card.dataset.title;
-                const content = card.dataset.content;
-                if (title.includes(searchTerm) || content.includes(searchTerm)) {
-                    card.style.display = 'block';
-                    visibleCount++;
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-            if (emptyState) {
-                emptyState.style.display = (cards.length === 0 || visibleCount === 0) ? 'block' : 'none';
-            }
-        });
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    let currentNoteId = null;
 
-        // Event delegation for Edit buttons
-        document.addEventListener('click', function(e) {
-            if (e.target.closest('.btn-edit')) {
-                const button = e.target.closest('.btn-edit');
-                const id = button.dataset.noteId;
-                const title = button.dataset.noteTitle;
-                const content = button.dataset.noteContent;
-                document.getElementById('editNoteId').value = id;
-                document.getElementById('editTitle').value = title;
-                document.getElementById('editContent').value = content;
-                document.getElementById('editForm').action = "{% url 'edit_note' 0 %}".replace('0', id);
-                new bootstrap.Modal(document.getElementById('editModal')).show();
-            }
-        });
+    // Select a note
+    document.querySelectorAll('.note-item').forEach(item => {
+      item.addEventListener('click', () => {
+        currentNoteId = item.dataset.noteId;
+        document.getElementById('noteTitle').textContent = item.dataset.title;
+        document.getElementById('noteContent').textContent = item.dataset.content;
+        document.getElementById('editBtn').classList.remove('d-none');
+        document.getElementById('deleteBtn').classList.remove('d-none');
 
-        // Event delegation for Delete buttons
-        document.addEventListener('click', function(e) {
-            if (e.target.closest('.btn-delete')) {
-                const button = e.target.closest('.btn-delete');
-                const id = button.dataset.noteId;
-                const title = button.dataset.noteTitle;
-                document.getElementById('deleteNoteId').value = id;
-                document.getElementById('deleteTitle').textContent = title;
-                document.getElementById('deleteForm').action = "{% url 'delete_note' 0 %}".replace('0', id);
-                new bootstrap.Modal(document.getElementById('deleteModal')).show();
-            }
-        });
+        document.getElementById('noteView').classList.remove('d-none');
+        document.getElementById('noteEdit').classList.add('d-none');
+      });
+    });
 
-        // AJAX for form submissions
-        document.querySelectorAll('form').forEach(form => {
-            form.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                const formData = new FormData(form);
-                const url = form.action;
-                const method = form.method.toUpperCase();
-                
-                try {
-                    const response = await fetch(url, {
-                        method: method,
-                        body: formData,
-                        headers: {
-                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                        }
-                    });
-                    
-                    // Check if response is JSON (for create_note)
-                    const contentType = response.headers.get('content-type');
-                    if (contentType && contentType.includes('application/json')) {
-                        const data = await response.json();
-                        if (data.success) {
-                            const modalId = form.closest('.modal').id;
-                            const modal = bootstrap.Modal.getInstance(document.getElementById(modalId));
-                            if (modal) modal.hide();
-                            
-                            // Show success message if there's a message
-                            if (data.message) {
-                                alert(data.message);
-                            }
-                            
-                            setTimeout(() => location.reload(), 500);
-                        } else {
-                            alert('Error: ' + (data.error || 'Unknown error occurred'));
-                        }
-                    } else if (response.ok) {
-                        // Handle regular redirects (for edit/delete)
-                        const modalId = form.closest('.modal').id;
-                        const modal = bootstrap.Modal.getInstance(document.getElementById(modalId));
-                        if (modal) modal.hide();
-                        
-                        setTimeout(() => location.reload(), 500);
-                    } else {
-                        alert('Error submitting form. Please try again.');
-                    }
-                } catch (error) {
-                    console.error('Network error:', error);
-                    alert('Network error. Please try again.');
-                }
-            });
+    // Edit
+    document.getElementById('editBtn').addEventListener('click', () => {
+      document.getElementById('noteView').classList.add('d-none');
+      document.getElementById('noteEdit').classList.remove('d-none');
+
+      document.getElementById('editNoteId').value = currentNoteId;
+      document.getElementById('editTitle').value = document.getElementById('noteTitle').textContent;
+      document.getElementById('editContent').value = document.getElementById('noteContent').textContent;
+    });
+
+    // Cancel Edit
+    document.getElementById('cancelEdit').addEventListener('click', () => {
+      document.getElementById('noteView').classList.remove('d-none');
+      document.getElementById('noteEdit').classList.add('d-none');
+    });
+
+    // Save Edit (AJAX)
+    document.getElementById('editForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      fetch(`/notes/edit/${currentNoteId}/`, {
+        method: 'POST',
+        body: new FormData(this),
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          document.getElementById('noteTitle').textContent = data.note.title;
+          document.getElementById('noteContent').textContent = data.note.content;
+
+          let item = document.querySelector(`.note-item[data-note-id="${currentNoteId}"]`);
+          item.dataset.title = data.note.title;
+          item.dataset.content = data.note.content;
+          item.querySelector('h6').textContent = data.note.title;
+          item.querySelector('p').textContent = data.note.content.substring(0, 50);
+
+          document.getElementById('noteView').classList.remove('d-none');
+          document.getElementById('noteEdit').classList.add('d-none');
+        }
+      });
+    });
+
+    // Delete
+    document.getElementById('deleteBtn').addEventListener('click', () => {
+      if (!currentNoteId) return;
+      if (confirm("Are you sure you want to delete this note?")) {
+        fetch(`/notes/delete/${currentNoteId}/`, {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            document.querySelector(`.note-item[data-note-id="${currentNoteId}"]`).remove();
+            document.getElementById('noteTitle').textContent = "";
+            document.getElementById('noteContent').textContent = "";
+            document.getElementById('editBtn').classList.add('d-none');
+            document.getElementById('deleteBtn').classList.add('d-none');
+          }
         });
-    </script>
+      }
+    });
+  </script>
 </body>
 </html>

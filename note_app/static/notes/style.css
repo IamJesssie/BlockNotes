@@ -3,6 +3,7 @@ body {
     color: #ffffff;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     line-height: 1.6;
+    overflow: hidden;
 }
 
 .navbar {
@@ -245,3 +246,46 @@ body {
         margin-bottom: 1rem;
     }
 }
+
+#sidebar {
+  height: calc(95vh - 70px); /* full height minus navbar */
+  overflow-y: auto;           /* vertical scroll */
+}
+
+/* Custom Scrollbars */
+#sidebar::-webkit-scrollbar,
+#mainPane::-webkit-scrollbar {
+  width: 8px;              /* thin scrollbar */
+}
+
+#sidebar::-webkit-scrollbar-track,
+#mainPane::-webkit-scrollbar-track {
+  background: transparent; /* no bulky background */
+}
+
+#sidebar::-webkit-scrollbar-thumb,
+#mainPane::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);  /* subtle light scrollbar */
+  border-radius: 10px;
+  transition: background 0.3s ease;
+}
+
+#sidebar::-webkit-scrollbar-thumb:hover,
+#mainPane::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);  /* brighter on hover */
+}
+
+/* Firefox scrollbar */
+#sidebar,
+
+
+#mainPane {
+  height: calc(100vh - 70px); /* Same height as sidebar */
+  overflow-y: auto;           /* Scroll only inside main pane */
+}
+
+#mainPane {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
