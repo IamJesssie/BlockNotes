@@ -7,8 +7,12 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Blockchain connectivity check
+
 def get_blockchain_status():
+    """
+    Checks if Ganache is running and accessible.
+    Returns True if connected, False if not.
+    """
     try:
         w3 = Web3(Web3.HTTPProvider('http://127.0.0.1:8545'))
         return w3.is_connected()
@@ -39,7 +43,7 @@ def list_notes(request):
         "sort_by": sort_by
     })
 
-# CREATE
+
 def create_note_view(request):
     if request.method == 'POST':
         try:
@@ -52,15 +56,20 @@ def create_note_view(request):
             note = Note.objects.create(title=title, content=content)
             logger.info(f"Note created with ID: {note.id}")
 
+
             try:
                 w3 = Web3(Web3.HTTPProvider('http://127.0.0.1:8545'))
 
                 if not w3.is_connected():
-                    return JsonResponse({'success': True, 'note_id': note.id, 'message': 'Note saved (blockchain offline)'})
-
+                    logger.warning("Blockchain not connected")
+                    return JsonResponse({'success': True, 'note_id': note.id, 'message': 'Note saved locally because blockchain is offline.'})
+                
+                # Get accounts from Ganache
                 accounts = w3.eth.accounts
                 if not accounts:
-                    return JsonResponse({'success': True, 'note_id': note.id, 'message': 'Note saved (no blockchain accounts)'})
+                    logger.warning("No blockchain accounts available")
+                    return JsonResponse({'success': True, 'note_id': note.id, 'message': 'Note saved locally because no blockchain accounts are available.'})
+                
 
                 from_account = accounts[0]
                 note_string = f"{note.id}:{note.title}:{note.content}"
@@ -99,7 +108,10 @@ def create_note_view(request):
             logger.error(f"Error creating note: {str(e)}")
             return JsonResponse({'success': False, 'error': str(e)})
 
+
     return render(request, 'notes/create_note.html')
+
+
 
 # EDIT
 def edit_note(request, note_id):

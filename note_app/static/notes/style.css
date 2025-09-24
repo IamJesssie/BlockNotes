@@ -6,6 +6,21 @@ body {
     overflow: hidden;
 }
 
+#blockchain-status {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 0.95rem;
+}
+
+#blockchain-status .connected {
+    font-weight: 600;
+    color: #28a745;
+}
+
+#blockchain-status .offline {
+    font-weight: 600;
+    color: #dc3545;
+}
 .navbar {
     background-color: #0a1427;
     border-bottom: 1px solid #1e3a8a;
