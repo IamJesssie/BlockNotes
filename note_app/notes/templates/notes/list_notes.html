@@ -84,7 +84,8 @@
             <h2 id="noteTitle" class="fw-bold me-2"></h2>
             <div>
               <button id="editBtn" class="btn btn-warning btn-sm me-2 d-none">Edit</button>
-              <button id="deleteBtn" class="btn btn-danger btn-sm d-none">Delete</button>
+              <button id="deleteBtn" class="btn btn-danger btn-sm me-2 d-none">Delete</button>
+              <button id="receiptBtn" class="btn btn-success btn-sm d-none">Receipt</button>
             </div>
           </div>
           <div class="note-body p-4">
@@ -119,7 +120,7 @@
           <h5 class="modal-title">Create New Note</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-        <form method="POST" action="{% url 'create_note' %}">
+        <form method="POST" id="createNoteForm">
           {% csrf_token %}
           <div class="modal-body">
             <div class="mb-3">
@@ -154,6 +155,7 @@
 
         document.getElementById('editBtn').classList.remove('d-none');
         document.getElementById('deleteBtn').classList.remove('d-none');
+        document.getElementById('receiptBtn').classList.remove('d-none');
 
         document.getElementById('noteView').classList.remove('d-none');
         document.getElementById('noteEdit').classList.add('d-none');
@@ -176,6 +178,56 @@
     document.getElementById('cancelEdit').addEventListener('click', () => {
       document.getElementById('noteView').classList.remove('d-none');
       document.getElementById('noteEdit').classList.add('d-none');
+    });
+
+    // Receipt Button - Open in new page with detailed verification
+    document.getElementById('receiptBtn').addEventListener('click', () => {
+        if (currentNoteId) {
+            // Open verification page in new tab
+            window.open(`/notes/verify/${currentNoteId}/`, '_blank');
+        }
+    });
+
+    // Create Note - Stay on same page (AJAX)
+    document.getElementById('createNoteForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        
+        fetch('/notes/create/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('createModal'));
+                if (modal) modal.hide();
+                
+                // Clear form
+                this.reset();
+                
+                // Show success message
+                let message = 'Note created successfully!';
+                if (data.tx_hash) {
+                    message += ` Blockchain TX: ${data.tx_hash.substring(0, 10)}...`;
+                }
+                alert(message);
+                
+                // Refresh page to show new note
+                window.location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error occurred'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error creating note. Please try again.');
+        });
     });
 
     // Save Edit (AJAX)
@@ -230,6 +282,7 @@
 
                 document.getElementById('editBtn').classList.add('d-none');
                 document.getElementById('deleteBtn').classList.add('d-none');
+                document.getElementById('receiptBtn').classList.add('d-none');
             }
             });
         }
