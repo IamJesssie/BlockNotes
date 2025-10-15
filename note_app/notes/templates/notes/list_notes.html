@@ -1,113 +1,88 @@
+{% extends "notes/base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Notes</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-  <link rel="stylesheet" href="{% static 'notes/style.css' %}">
-</head>
-<body>
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg">
-    <div class="container-fluid">
-      <div class="d-flex align-items-center me-auto">
-        <a class="navbar-brand text-white fw-bold" href="#">BlockNotes</a>
-        <form class="d-flex me-3">
-          <input class="form-control search-input" type="search" placeholder="Search notes..." id="searchInput">
+
+{% block title %}Notes - BlockNotes{% endblock %}
+
+{% block content %}
+  <!-- Split layout -->
+  <div class="row g-0">
+    
+    <!-- Sidebar (scrollable) -->
+    <div class="col-md-4 border-end vh-100 d-flex flex-column" id="sidebar">
+      <div class="p-3 border-bottom">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">My Notes</h5>
+          <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createModal">+ New Note</button>
+        </div>
+        <form class="d-flex mt-3">
+          <input class="form-control form-control-sm" type="search" placeholder="Search notes..." id="searchInput" value="{{ search_query }}">
         </form>
       </div>
-      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">+ New Note</button>
-    </div>
-  </nav>
 
-  <!-- Split layout -->
-  <div class="container-fluid mt-4">
-    <div class="row">
-      
-      <!-- Sidebar (scrollable) -->
-      <div class="col-md-3 border-end" id="sidebar">
-
-        <!-- Blockchain status -->
-        <div id="blockchain-status" class="p-2 border-bottom">
-          <strong>Blockchain Status:</strong>
-          {% if blockchain_status %}
-              <span class="connected text-success">Connected ✅</span>
-          {% else %}
-              <span class="offline text-danger">Offline ❌</span>
-          {% endif %}
-        </div>
-
-        <!-- Sorting buttons -->
-        <div class="d-flex justify-content-between p-2 border-bottom flex-wrap">
-          <a href="?sort=-created_at{% if search_query %}&q={{ search_query }}{% endif %}" 
-             class="btn btn-sm btn-outline-primary {% if sort_by == '-created_at' %}active{% endif %}">
-             Newest
-          </a>
-          <a href="?sort=created_at{% if search_query %}&q={{ search_query }}{% endif %}" 
-             class="btn btn-sm btn-outline-primary {% if sort_by == 'created_at' %}active{% endif %}">
-             Oldest
-          </a>
-          <a href="?sort=title{% if search_query %}&q={{ search_query }}{% endif %}" 
-             class="btn btn-sm btn-outline-secondary {% if sort_by == 'title' %}active{% endif %}">
-             A–Z
-          </a>
-          <a href="?sort=-title{% if search_query %}&q={{ search_query }}{% endif %}" 
-             class="btn btn-sm btn-outline-secondary {% if sort_by == '-title' %}active{% endif %}">
-             Z–A
-          </a>
-        </div>
-
-        <!-- Notes list -->
-        {% for note in notes %}
-        <div class="note-item p-3 border-bottom" data-note-id="{{ note.id }}" 
-             data-title="{{ note.title }}" data-content="{{ note.content }}">
-          <h6 class="fw-bold">{{ note.title }}</h6>
-          <p class="small text-muted mb-1">{{ note.content|truncatechars:50 }}</p>
-          <span class="small text-secondary">{{ note.created_at|date:"M d, Y H:i" }}</span>
-        </div>
-        {% empty %}
-        <p class="text-muted p-3">No notes yet. Create one!</p>
-        {% endfor %}
+      <!-- Sorting buttons -->
+      <div class="d-flex justify-content-around p-2 border-bottom small">
+        <a href="?sort=-created_at{% if search_query %}&q={{ search_query }}{% endif %}" class="text-decoration-none {% if sort_by == '-created_at' %}fw-bold{% endif %}">Newest</a>
+        <a href="?sort=created_at{% if search_query %}&q={{ search_query }}{% endif %}" class="text-decoration-none {% if sort_by == 'created_at' %}fw-bold{% endif %}">Oldest</a>
+        <a href="?sort=title{% if search_query %}&q={{ search_query }}{% endif %}" class="text-decoration-none {% if sort_by == 'title' %}fw-bold{% endif %}">A–Z</a>
+        <a href="?sort=-title{% if search_query %}&q={{ search_query }}{% endif %}" class="text-decoration-none {% if sort_by == '-title' %}fw-bold{% endif %}">Z–A</a>
       </div>
 
-      <!-- Main Pane -->
-      <div class="col-md-9" id="mainPane">
-        <div id="emptyState" class="p-5 text-center text-muted">
-            <h4>Select a note...</h4>
-        </div>
-        <!-- View Mode -->
-        <div id="noteView" class="text-light">
-          <div class="note-header d-flex justify-content-between align-items-start p-3">
-            <h2 id="noteTitle" class="fw-bold me-2"></h2>
-            <div>
-              <button id="editBtn" class="btn btn-warning btn-sm me-2 d-none">Edit</button>
-              <button id="deleteBtn" class="btn btn-danger btn-sm me-2 d-none">Delete</button>
-              <button id="receiptBtn" class="btn btn-success btn-sm d-none">Receipt</button>
-            </div>
+      <!-- Notes list -->
+      <div class="list-group list-group-flush overflow-auto">
+        {% for note in notes %}
+        <a href="#" class="list-group-item list-group-item-action note-item" data-note-id="{{ note.id }}" data-title="{{ note.title }}" data-content="{{ note.content }}">
+          <div class="d-flex w-100 justify-content-between">
+            <h6 class="mb-1 fw-bold">{{ note.title }}</h6>
           </div>
-          <div class="note-body p-4">
-            <p id="noteContent" class="note-content"></p>
-          </div>
+          <p class="mb-1 small text-muted">{{ note.content|truncatechars:70 }}</p>
+          <small class="text-muted">{{ note.created_at|date:"M d, Y H:i" }}</small>
+        </a>
+        {% empty %}
+        <div class="text-center p-5 text-muted">
+          <p class="mb-0">No notes yet. Click "+ New Note" to create one!</p>
         </div>
+        {% endfor %}
+      </div>
+    </div>
 
-        <!-- Edit Mode -->
-        <div id="noteEdit" class="p-4 d-none">
-          <form method="POST" id="editForm">
-            {% csrf_token %}
-            <input type="hidden" id="editNoteId" name="note_id">
-            <div class="mb-3">
-              Title<input type="text" class="form-control" id="editTitle" name="title" required>
-            </div>
-            <div class="mb-3">
-              Content<textarea class="form-control" id="editContent" name="content" rows="10" required></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary me-2">Save</button>
-            <button type="button" class="btn btn-secondary" id="cancelEdit">Cancel</button>
-          </form>
+    <!-- Main Pane -->
+    <div class="col-md-8 vh-100 d-flex flex-column" id="mainPane">
+      <div id="emptyState" class="p-5 text-center text-muted m-auto">
+          <i class="bi bi-journal-text" style="font-size: 4rem;"></i>
+          <h4 class="mt-3">Select a note to view it</h4>
+          <p>Or create a new one to get started.</p>
+      </div>
+      <!-- View Mode -->
+      <div id="noteView" class="d-none flex-grow-1 d-flex flex-column">
+        <div class="note-header d-flex justify-content-between align-items-center p-3 border-bottom">
+          <h2 id="noteTitle" class="fw-bold me-2 mb-0"></h2>
+          <div>
+            <button id="editBtn" class="btn btn-outline-secondary btn-sm me-2">Edit</button>
+            <button id="deleteBtn" class="btn btn-outline-danger btn-sm me-2">Delete</button>
+            <button id="receiptBtn" class="btn btn-outline-success btn-sm">Receipt</button>
+          </div>
         </div>
+        <div class="note-body p-4 overflow-auto">
+          <p id="noteContent" class="note-content"></p>
+        </div>
+      </div>
+
+      <!-- Edit Mode -->
+      <div id="noteEdit" class="p-4 d-none flex-grow-1 d-flex flex-column overflow-auto">
+        <form method="POST" id="editForm" class="d-flex flex-column flex-grow-1">
+          {% csrf_token %}
+          <input type="hidden" id="editNoteId" name="note_id">
+          <div class="mb-3">
+            <input type="text" class="form-control" id="editTitle" name="title" required placeholder="Title">
+          </div>
+          <div class="mb-3 flex-grow-1">
+            <textarea class="form-control h-100" id="editContent" name="content" rows="10" required placeholder="Start writing..."></textarea>
+          </div>
+          <div>
+            <button type="submit" class="btn btn-primary me-2">Save Changes</button>
+            <button type="button" class="btn btn-secondary" id="cancelEdit">Cancel</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -140,153 +115,152 @@
       </div>
     </div>
   </div>
+{% endblock %}
 
-  <!-- Scripts -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+{% block scripts %}
   <script>
-    let currentNoteId = null;
+    document.addEventListener('DOMContentLoaded', function () {
+      let currentNoteId = null;
+      const noteView = document.getElementById('noteView');
+      const noteEdit = document.getElementById('noteEdit');
+      const emptyState = document.getElementById('emptyState');
 
-    // Select a note
-    document.querySelectorAll('.note-item').forEach(item => {
-      item.addEventListener('click', () => {
-        currentNoteId = item.dataset.noteId;
-        document.getElementById('noteTitle').textContent = item.dataset.title;
-        document.getElementById('noteContent').textContent = item.dataset.content;
-
-        document.getElementById('editBtn').classList.remove('d-none');
-        document.getElementById('deleteBtn').classList.remove('d-none');
-        document.getElementById('receiptBtn').classList.remove('d-none');
-
-        document.getElementById('noteView').classList.remove('d-none');
-        document.getElementById('noteEdit').classList.add('d-none');
-
-        document.getElementById('emptyState').classList.add('d-none');
-      });
-    });
-
-    // Edit
-    document.getElementById('editBtn').addEventListener('click', () => {
-      document.getElementById('noteView').classList.add('d-none');
-      document.getElementById('noteEdit').classList.remove('d-none');
-
-      document.getElementById('editNoteId').value = currentNoteId;
-      document.getElementById('editTitle').value = document.getElementById('noteTitle').textContent;
-      document.getElementById('editContent').value = document.getElementById('noteContent').textContent;
-    });
-
-    // Cancel Edit
-    document.getElementById('cancelEdit').addEventListener('click', () => {
-      document.getElementById('noteView').classList.remove('d-none');
-      document.getElementById('noteEdit').classList.add('d-none');
-    });
-
-    // Receipt Button - Open in new page with detailed verification
-    document.getElementById('receiptBtn').addEventListener('click', () => {
-        if (currentNoteId) {
-            // Open verification page in new tab
-            window.open(`/notes/verify/${currentNoteId}/`, '_blank');
+      // Function to show a view
+      function showView(viewToShow) {
+        noteView.classList.add('d-none');
+        noteEdit.classList.add('d-none');
+        emptyState.classList.add('d-none');
+        if (viewToShow) {
+          viewToShow.classList.remove('d-none');
         }
-    });
+      }
 
-    // Create Note - Stay on same page (AJAX)
-    document.getElementById('createNoteForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const formData = new FormData(this);
-        
-        fetch('/notes/create/', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Close modal
-                const modal = bootstrap.Modal.getInstance(document.getElementById('createModal'));
-                if (modal) modal.hide();
-                
-                // Clear form
-                this.reset();
-                
-                // Show success message
-                let message = 'Note created successfully!';
-                if (data.tx_hash) {
-                    message += ` Blockchain TX: ${data.tx_hash.substring(0, 10)}...`;
-                }
-                alert(message);
-                
-                // Refresh page to show new note
-                window.location.reload();
-            } else {
-                alert('Error: ' + (data.error || 'Unknown error occurred'));
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error creating note. Please try again.');
+      // Select a note
+      document.querySelectorAll('.note-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.preventDefault();
+          // Highlight active item
+          document.querySelectorAll('.note-item').forEach(i => i.classList.remove('active'));
+          item.classList.add('active');
+
+          currentNoteId = item.dataset.noteId;
+          document.getElementById('noteTitle').textContent = item.dataset.title;
+          document.getElementById('noteContent').textContent = item.dataset.content;
+          showView(noteView);
         });
-    });
-
-    // Save Edit (AJAX)
-    document.getElementById('editForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      fetch(`/notes/edit/${currentNoteId}/`, {
-        method: 'POST',
-        body: new FormData(this),
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          document.getElementById('noteTitle').textContent = data.note.title;
-          document.getElementById('noteContent').textContent = data.note.content;
-
-          let item = document.querySelector('.note-item[data-note-id="' + currentNoteId + '"]');
-          item.dataset.title = data.note.title;
-          item.dataset.content = data.note.content;
-          item.querySelector('h6').textContent = data.note.title;
-          item.querySelector('p').textContent = data.note.content.substring(0, 50);
-
-          document.getElementById('noteView').classList.remove('d-none');
-          document.getElementById('noteEdit').classList.add('d-none');
-        }
       });
-    });
 
-    // Delete
-    document.getElementById('deleteBtn').addEventListener('click', () => {
-        if (!currentNoteId) return;
-        if (confirm("Are you sure you want to delete this note?")) {
-            fetch(`/notes/delete/${currentNoteId}/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-                'X-Requested-With': 'XMLHttpRequest'
-            }
+      // Edit button
+      document.getElementById('editBtn').addEventListener('click', () => {
+        showView(noteEdit);
+        document.getElementById('editNoteId').value = currentNoteId;
+        document.getElementById('editTitle').value = document.getElementById('noteTitle').textContent;
+        document.getElementById('editContent').value = document.getElementById('noteContent').textContent;
+      });
+
+      // Cancel Edit
+      document.getElementById('cancelEdit').addEventListener('click', () => {
+        showView(noteView);
+      });
+
+      // Receipt Button
+      document.getElementById('receiptBtn').addEventListener('click', () => {
+          if (currentNoteId) {
+              window.open(`/notes/verify/${currentNoteId}/`, '_blank');
+          }
+      });
+
+      // Create Note (AJAX)
+      const createNoteForm = document.getElementById('createNoteForm');
+      if(createNoteForm) {
+        createNoteForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            fetch('{% url "notes:create_note" %}', {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
             })
-            .then(res => res.json())
+            .then(response => response.json())
             .then(data => {
-            if (data.success) {
-                document.querySelector(`.note-item[data-note-id="${currentNoteId}"]`).remove();
-                currentNoteId = null;
-
-                document.getElementById('noteTitle').textContent = "";
-                document.getElementById('noteContent').textContent = "";
-
-                document.getElementById('noteView').classList.add('d-none');
-                document.getElementById('noteEdit').classList.add('d-none');
-                document.getElementById('emptyState').classList.remove('d-none'); // show empty message
-
-                document.getElementById('editBtn').classList.add('d-none');
-                document.getElementById('deleteBtn').classList.add('d-none');
-                document.getElementById('receiptBtn').classList.add('d-none');
-            }
+                if (data.success) {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('createModal'));
+                    if (modal) modal.hide();
+                    this.reset();
+                    window.location.reload(); // Reload to see new note and updated status
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error occurred'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error creating note. Please try again.');
             });
-        }
         });
+      }
+
+      // Save Edit (AJAX)
+      const editForm = document.getElementById('editForm');
+      if(editForm) {
+        editForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          fetch(`/notes/edit/${currentNoteId}/`, {
+            method: 'POST',
+            body: new FormData(this),
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              // Update view mode content
+              document.getElementById('noteTitle').textContent = data.note.title;
+              document.getElementById('noteContent').textContent = data.note.content;
+
+              // Update sidebar item data and text
+              let item = document.querySelector('.note-item[data-note-id="' + currentNoteId + '"]');
+              item.dataset.title = data.note.title;
+              item.dataset.content = data.note.content;
+              item.querySelector('h6').textContent = data.note.title;
+              item.querySelector('p').textContent = data.note.content.substring(0, 70);
+              
+              showView(noteView);
+            }
+          });
+        });
+      }
+
+      // Delete
+      document.getElementById('deleteBtn').addEventListener('click', () => {
+          if (!currentNoteId) return;
+          if (confirm("Are you sure you want to delete this note?")) {
+              fetch(`/notes/delete/${currentNoteId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+              })
+              .then(res => res.json())
+              .then(data => {
+                if (data.success) {
+                    document.querySelector(`.note-item[data-note-id="${currentNoteId}"]`).remove();
+                    currentNoteId = null;
+                    showView(emptyState);
+                }
+              });
+          }
+      });
+
+      // Search on form submit (to handle enter key)
+      const searchForm = document.querySelector('#sidebar form');
+      const searchInput = document.getElementById('searchInput');
+      if(searchForm) {
+        searchForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          const query = searchInput.value;
+          window.location.href = `{% url 'notes:list_notes' %}?q=${encodeURIComponent(query)}`;
+        });
+      }
+    });
   </script>
-</body>
-</html>
+{% endblock %}

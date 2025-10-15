@@ -3,7 +3,6 @@ body {
     color: #ffffff;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     line-height: 1.6;
-    overflow: hidden;
 }
 
 #blockchain-status {
@@ -347,5 +346,21 @@ body {
   font-size: 1.2rem;
   font-weight: 600;
   color: #e2e8f0;
+}
+
+/* Note Item Styling */
+.list-group-item.note-item {
+    background-color: transparent;
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+.list-group-item.note-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.list-group-item.note-item.active {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
 }
 

@@ -22,7 +22,10 @@ def get_blockchain_status():
         logger.error(f"Blockchain connection error: {e}")
         return False
 
+from django.contrib.auth.decorators import login_required
+
 # LIST
+@login_required
 def list_notes(request):
     sort_by = request.GET.get("sort", "-created_at")  
     search_query = request.GET.get("q", "")
@@ -49,6 +52,8 @@ def list_notes(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def create_note_view(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'Authentication required'}, status=401)
     try:
         title = request.POST.get('title', '').strip()
         content = request.POST.get('content', '').strip()
@@ -135,6 +140,8 @@ def create_note_view(request):
 # EDIT
 @require_http_methods(["POST"])
 def edit_note(request, note_id):
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'Authentication required'}, status=401)
     note = get_object_or_404(Note, id=note_id)
     if request.method == 'POST':
         note.title = request.POST.get('title')
@@ -146,6 +153,8 @@ def edit_note(request, note_id):
 # DELETE
 @require_http_methods(["POST"])
 def delete_note(request, note_id):
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'Authentication required'}, status=401)
     note = get_object_or_404(Note, id=note_id)
     if request.method == 'POST':
         note.delete()
