@@ -29,6 +29,11 @@ body {
 .navbar-brand {
     font-size: 1.5rem;
     font-weight: 600;
+    color: #ffffff;
+}
+
+.navbar-text {
+    color: #ffffff;
 }
 
 .search-input {
@@ -362,5 +367,126 @@ body {
 .list-group-item.note-item.active {
     background-color: #3b82f6;
     border-color: #3b82f6;
+}
+
+/* Light Mode Styles */
+body.light-mode {
+    background-color: #f8f9fa;
+    color: #212529;
+}
+
+.light-mode .navbar {
+    background-color: #ffffff;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.light-mode .navbar-brand,
+.light-mode .navbar-text,
+.light-mode .navbar-brand:hover {
+    color: #212529;
+}
+
+.light-mode .btn-outline-light {
+    color: #212529;
+    border-color: #ced4da;
+}
+
+.light-mode .btn-outline-light:hover {
+    color: #fff;
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+.light-mode #sidebar {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+}
+
+.light-mode .list-group-item.note-item {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    color: #212529;
+}
+
+.light-mode .list-group-item.note-item:hover {
+    background-color: #e9ecef;
+}
+
+.light-mode .list-group-item.note-item.active {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: #fff;
+}
+
+.light-mode #mainPane {
+    background-color: #ffffff;
+}
+
+.light-mode #noteTitle,
+.light-mode #noteContent,
+.light-mode #noteEdit label,
+.light-mode #noteEdit .form-label {
+    color: #212529;
+}
+
+.light-mode .note-header {
+    border-bottom-color: #dee2e6;
+}
+
+.light-mode .form-control {
+    background-color: #ffffff;
+    border-color: #ced4da;
+    color: #212529;
+}
+
+.light-mode .form-control:focus {
+    background-color: #ffffff;
+    border-color: #86b7fe;
+    color: #212529;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.light-mode .form-control::placeholder {
+    color: #6c757d;
+}
+
+.light-mode .modal-content {
+    background-color: #ffffff;
+    color: #212529;
+    border-color: #dee2e6;
+}
+
+.light-mode .modal-header {
+    background-color: #f8f9fa;
+    border-bottom-color: #dee2e6;
+}
+
+.light-mode .modal-title {
+    color: #212529;
+}
+
+.light-mode .modal-footer {
+    background-color: #f8f9fa;
+    border-top-color: #dee2e6;
+}
+
+.light-mode .text-muted {
+    color: #6c757d !important;
+}
+
+.light-mode #noteView {
+    color: #212529;
+}
+
+.light-mode #sidebar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.light-mode #sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.light-mode #mainPane {
+  scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
 }
 
