@@ -91,6 +91,23 @@
     </main>
 </div>
 
+<!-- Logout modal -->
+<div class="modal-backdrop" id="logout-backdrop" aria-hidden="true" role="presentation">
+    <div class="modal-centered" role="dialog" aria-modal="true" aria-labelledby="logout-title">
+        <div class="modal-body">
+            <h2 id="logout-title">Sign out</h2>
+            <p>Are you sure you want to sign out?</p>
+            <div class="modal-actions">
+                <button id="cancel-logout-btn" class="btn-cancel" type="button">Cancel</button>
+                <form method="POST" action="/accounts/logout/" style="display:inline;">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                    <button type="submit" class="btn-logout-confirm">Sign out</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modals -->
 <div id="delete-modal" class="modal" style="display: none;">
     <div class="modal-content">
@@ -418,6 +435,55 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     setInterval(checkBlockchainStatus, 5000);
     checkBlockchainStatus();
+
+    // --- Logout modal (centered) behavior ---
+    const logoutBtn = document.querySelector('.logout-button');
+    const logoutBackdrop = document.getElementById('logout-backdrop');
+    const cancelLogoutBtn = document.getElementById('cancel-logout-btn');
+
+    function openLogoutModal() {
+        if (!logoutBackdrop) return;
+        logoutBackdrop.classList.add('visible');
+        logoutBackdrop.setAttribute('aria-hidden', 'false');
+        // prevent background scroll
+        document.documentElement.style.overflow = 'hidden';
+        document.body.style.overflow = 'hidden';
+        // focus first action
+        const focusTarget = logoutBackdrop.querySelector('.btn-cancel, .btn-logout-confirm');
+        if (focusTarget) focusTarget.focus();
+    }
+
+    function closeLogoutModal() {
+        if (!logoutBackdrop) return;
+        logoutBackdrop.classList.remove('visible');
+        logoutBackdrop.setAttribute('aria-hidden', 'true');
+        document.documentElement.style.overflow = '';
+        document.body.style.overflow = '';
+        if (logoutBtn) logoutBtn.focus();
+    }
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            openLogoutModal();
+        });
+    }
+
+    if (cancelLogoutBtn) {
+        cancelLogoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            closeLogoutModal();
+        });
+    }
+
+    if (logoutBackdrop) {
+        logoutBackdrop.addEventListener('click', function(e) {
+            if (e.target === logoutBackdrop) closeLogoutModal();
+        });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeLogoutModal();
+        });
+    }
 });
 </script>
 {% endblock %}
