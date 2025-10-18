@@ -11,29 +11,10 @@
   <link rel="stylesheet" href="{% static 'notes/landing.css' %}">
 </head>
 <body class="{% block body_class %}{% endblock %}">
+  {% include 'notes/_bg_blobs.html' %}
+  
   {% block navbar %}
-  <header class="new-header">
-      <a href="#" class="logo-block">
-          <div class="logo-icon-wrapper">
-              <!-- SVG for logo -->
-          </div>
-          <span class="logo-text">BlockNotes</span>
-      </a>
-      <div class="user-controls">
-        {% if user.is_authenticated %}
-            <div class="user-info-pill">
-                <!-- User Icon SVG -->
-                <span>{{ user.username }}</span>
-            </div>
-            <a href="{% url 'account_logout' %}" class="logout-button">
-                <!-- Logout Icon SVG -->
-                Logout
-            </a>
-        {% else %}
-            <a href="{% url 'account_login' %}" class="btn-new-note">Login</a>
-        {% endif %}
-      </div>
-  </header>
+  {% include 'notes/_header.html' %}
   {% endblock navbar %}
 
   <div class="main-content-area">

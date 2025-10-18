@@ -6,6 +6,7 @@ from .models import Note, BlockchainReceipt
 from web3 import Web3
 import hashlib
 import logging
+from django.db.models import Q
 
 logger = logging.getLogger(__name__)
 
@@ -13,14 +14,24 @@ logger = logging.getLogger(__name__)
 def get_blockchain_status():
     """
     Checks if Ganache is running and accessible.
-    Returns True if connected, False if not.
+    Tries several common local RPC endpoints and returns True if any respond.
     """
-    try:
-        w3 = Web3(Web3.HTTPProvider('http://127.0.0.1:8545'))
-        return w3.is_connected()
-    except Exception as e:
-        logger.error(f"Blockchain connection error: {e}")
-        return False
+    providers = [
+        'http://127.0.0.1:8545',
+        'http://127.0.0.1:7545',
+        'http://127.0.0.1:8546',
+    ]
+    for p in providers:
+        try:
+            # Use a short timeout so status checks are fast
+            w3 = Web3(Web3.HTTPProvider(p, request_kwargs={'timeout': 1}))
+            if w3.is_connected():
+                logger.info(f"Connected to blockchain via {p}")
+                return True
+        except Exception as e:
+            logger.debug(f"Blockchain connection attempt to {p} failed: {e}")
+            continue
+    return False
 
 from django.contrib.auth.decorators import login_required
 
@@ -37,10 +48,10 @@ def list_notes(request):
     if sort_by not in valid_sort_fields:
         sort_by = "-created_at"
 
-    notes = Note.objects.all().order_by(sort_by)
-
+    notes = Note.objects.all()
     if search_query:
-        notes = notes.filter(title__icontains=search_query) | notes.filter(content__icontains=search_query)
+        notes = notes.filter(Q(title__icontains=search_query) | Q(content__icontains=search_query))
+    notes = notes.order_by(sort_by)
 
     blockchain_status = get_blockchain_status()
 
