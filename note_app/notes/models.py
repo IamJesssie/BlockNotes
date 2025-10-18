@@ -23,3 +23,4 @@ class BlockchainReceipt(models.Model):
     class Meta:
         verbose_name = "Blockchain Receipt"
         verbose_name_plural = "Blockchain Receipts"
+ganache --host 127.0.0.1 --port 8545 --accounts 10 --deterministic --db "./ganache-data"
