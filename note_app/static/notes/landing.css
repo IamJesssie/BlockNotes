@@ -1,0 +1,224 @@
+/* Translated from Figma Design */
+
+.landing-page-body {
+    background-color: #1a092d;
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.landing-page-body .background-gradient {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: linear-gradient(to bottom, #1a092d, #02042c 50%, #101211 100%);
+}
+
+.landing-page-body .blur-circle-1 {
+    position: absolute;
+    width: 384px;
+    height: 384px;
+    left: 419.75px;
+    top: 235.5px;
+    background-color: #384bff;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.987;
+}
+
+.landing-page-body .blur-circle-2 {
+    position: absolute;
+    width: 384px;
+    height: 384px;
+    left: 875.25px;
+    top: 322.5px;
+    background-color: #a020f0;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.513;
+}
+
+.landing-page-body .main-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+}
+
+.landing-page-body .header {
+    position: absolute;
+    width: 100%;
+    height: 64px;
+    left: 0;
+    top: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    box-sizing: border-box;
+}
+
+.landing-page-body .logo-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.landing-page-body .logo-icon-bg {
+    width: 32px;
+    height: 32px;
+    border-radius: 12px;
+    background-image: linear-gradient(to bottom, #384bff, #a020f0);
+    box-shadow: 0px 0px 22.282px 0px rgba(56,75,255,0.35), 0px 0px 44.564px 0px rgba(160,32,240,0.22);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.landing-page-body .logo-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.landing-page-body .logo-text {
+    font-family: 'Arimo', sans-serif;
+    font-size: 16px;
+    line-height: 24px;
+    color: #e3e2e5;
+}
+
+.landing-page-body .content-wrapper {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+    width: 448px;
+}
+
+.landing-page-body .welcome-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.welcome-icon-svg {
+    box-shadow: 0px 0px 20px 0px rgba(56,75,255,0.3), 0px 0px 40px 0px rgba(56,75,255,0.1);
+    margin: 0 auto 16px auto;
+}
+
+.welcome-title {
+    font-family: 'Arimo', sans-serif;
+    font-size: 20px;
+    line-height: 30px;
+    text-align: center;
+    color: #e3e2e5;
+    background-image: linear-gradient(172deg, #a020f0, #384bff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.landing-page-body .welcome-subtitle {
+    font-family: 'Arimo', sans-serif;
+    font-size: 16px;
+    line-height: 24px;
+    text-align: center;
+    color: rgba(255,255,255,0.6);
+}
+
+.landing-page-body .welcome-features {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: 'Arimo', sans-serif;
+    font-size: 14px;
+    line-height: 20px;
+    color: rgba(255,255,255,0.5);
+}
+
+.landing-page-body .welcome-features img {
+    width: 16px;
+    height: 16px;
+}
+
+.landing-page-body .signin-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.landing-page-body .signin-button {
+    width: 100%;
+    height: 48px;
+    border-radius: 10px;
+    background-image: linear-gradient(to bottom, #384bff, #a020f0);
+    box-shadow: 0px 0px 20px 0px rgba(56,75,255,0.3), 0px 0px 40px 0px rgba(56,75,255,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: white;
+    font-family: 'Arimo', sans-serif;
+    font-size: 14px;
+    line-height: 20px;
+    text-decoration: none;
+}
+
+.landing-page-body .signin-button img {
+    width: 16px;
+    height: 16px;
+}
+
+.landing-page-body .terms-text {
+    font-family: 'Arimo', sans-serif;
+    font-size: 12px;
+    line-height: 16px;
+    text-align: center;
+    color: rgba(255,255,255,0.4);
+}
+
+.landing-page-body .features-grid {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    width: 100%;
+}
+
+.landing-page-body .feature-card {
+    width: 141.33px;
+    height: 94px;
+    background-color: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5px;
+    padding: 10px;
+    box-sizing: border-box;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.landing-page-body .feature-icon {
+    font-size: 24px;
+}
+
+.landing-page-body .feature-text {
+    font-family: 'Arimo', sans-serif;
+    font-size: 12px;
+    line-height: 16px;
+    text-align: center;
+    color: rgba(255,255,255,0.7);
+}

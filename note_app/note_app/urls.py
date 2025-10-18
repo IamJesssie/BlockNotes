@@ -6,5 +6,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('notes/', include('notes.urls')),
     path('accounts/', include('allauth.urls')),
-    path('', RedirectView.as_view(url='/notes/', permanent=False)),
+    path('', RedirectView.as_view(url='/notes/landing/', permanent=False)),
 ]

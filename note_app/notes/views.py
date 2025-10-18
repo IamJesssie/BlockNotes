@@ -24,6 +24,9 @@ def get_blockchain_status():
 
 from django.contrib.auth.decorators import login_required
 
+def landing_page(request):
+    return render(request, 'account/landing.html')
+
 # LIST
 @login_required
 def list_notes(request):
@@ -165,6 +168,11 @@ def delete_note(request, note_id):
 @require_http_methods(["GET"])
 def verify_receipt(request, note_id):
     note = get_object_or_404(Note, id=note_id)
+
+# API Views
+def api_blockchain_status(request):
+    status = get_blockchain_status()
+    return JsonResponse({'is_connected': status})
     receipt = getattr(note, 'blockchain_receipt', None)
 
     if not receipt:
