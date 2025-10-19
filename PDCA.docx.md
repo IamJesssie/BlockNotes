@@ -24,27 +24,51 @@ Date: \<Date\>
 
 In this phase, identify the aspects of your **existing app** you want to improve, or outline your **course of action** if you are developing a proposed app.
 
-| Feature 1: Name of the Feature |
+| Feature 1: User Authentication and Security  |
 | :---- |
 
 * **Current Problem:**  
-  Describe the issue or limitation with this feature (e.g., poor user interface, lack of functionality, weak security).
+  The application completely lacked a user authentication system. There was no login or sign-up functionality. All notes were public and visible to any visitor, and there was no way to attribute notes to a specific author. This presented a major security flaw and made it impossible to provide a personalized user experience.
+
 
 * **Proposed Solution/ Plan for Implementation:**
 
-	Enumerate your specific steps to address the problem. Be detailed and clear.
+	The plan is to implement a robust and secure user authentication system  
+          using a trusted third-party provider to streamline the login process.
 
-If the issue is **UI-related**, include a low-fidelity or high-fidelity wireframe showing your proposed improvement.
+	
 
-If the issue is **security-related**, specify the tools or techniques you plan to use (e.g., encryption methods, authentication tools).
+1. Select Authentication Tool: Integrate the django-allauth library, a  
+   comprehensive and secure package for handling social authentication in Django.
 
-If it involves **functionality**, describe what you plan to add, change, or improve in the code or workflow.
+2. Choose Provider: Use Google as the sole OAuth provider for its ubiquity and  
+   ease of use.
 
-| Feature 2: Name of the Feature |
+3. Configure Django Project:
+
+* Add django-allauth and its dependencies (sites, socialaccount, etc.)    
+  to INSTALLED\_APPS in settings.py.  
+* Configure the necessary AUTHENTICATION\_BACKENDS and set the   
+  SITE\_ID.  
+* Update the project's main urls.py to include the allauth URL patterns under the /accounts/ path.  
+
+4. Create Google OAuth Credentials:  
+* Set up a new project in the Google Cloud Console  
+* Configure the OAuth consent screen.  
+* Create an "OAuth 2.0 Client ID" for a Web application, ensuring the authorized redirect URI is set correctly to [http://127.0.0.1:8000/accounts/google/login/callback/](http://127.0.0.1:8000/accounts/google/login/callback/).
+
+5. Secure Credentials:  
+* Create a superuser account for the Django admin panel.  
+* Store the Google Client ID and Client Secret securely by creating a "Social Application" object within the Django admin interface, linking it to the correct site. This is the production-ready method for managing credentials.  
+6. Protect Views: Secure the main notes view by adding the @login\_required decorator to ensure only authenticated users can access it.
+
+| Feature 2: User Interface and Experience (UI/UX) |
 | :---- |
 
 * **Current Problem:**  
-  *Write here*
+  The application's user interface was highly minimalistic and unstyled. It consisted of a single, hardcoded dark theme with no option for user preference, which could be an accessibility  
+    issue. The layout was basic, and key interactive elements were either missing or not intuitive, leading to a poor user experience.
+
 
 * **Proposed Solution/ Plan for Implementation:**
 

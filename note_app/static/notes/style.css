@@ -624,18 +624,29 @@ body {
 .note-editor-view .note-editor-header {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 12px;
 }
 
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Title input: boxed exactly like the content textarea */
 .note-editor-view .note-title-input {
-    flex: 1 1 auto;
+    background: rgba(50, 37, 90, 0.3);
+    border: 1px solid var(--header-border);
+    border-radius: 12px;
+    padding: 16px;
+    color: var(--text-primary);
     font-size: 20px;
     font-weight: 600;
-    background: transparent;
-    border: none;
-    color: var(--text-primary);
+    width: 100%;
+    box-sizing: border-box;
     outline: none;
-    padding: 6px 8px;
+    margin-bottom: 16px;
 }
 
 /* On-chain pill */
@@ -651,14 +662,7 @@ body {
     font-size: 12px;
 }
 
-/* Close button */
-.note-editor-view .editor-close {
-    background: transparent;
-    border: none;
-    color: var(--text-primary);
-    font-size: 20px;
-    cursor: pointer;
-}
+
 
 /* Toolbar */
 .note-editor-view .note-editor-toolbar {

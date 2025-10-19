@@ -294,8 +294,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="note-editor-container">
                     <div class="note-editor-header">
                         <input type="text" id="note-editor-title" class="note-title-input" value="${title || ''}" placeholder="Your note title..." />
-                        ${!isNewNote ? '<div class="on-chain-pill"><img src="' + STATIC_LOGOUT_ICON + '" alt="" /><span>On Blockchain</span></div>' : ''}
-                        <button id="editor-close-btn" class="editor-close">×</button>
+                        <div class="header-right">
+                            ${!isNewNote ? '<div class="on-chain-pill"><img src="' + STATIC_LOGOUT_ICON + '" alt="" /><span>On Blockchain</span></div>' : ''}
+                        </div>
                     </div>
 
                     <div class="note-editor-toolbar">
@@ -362,12 +363,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
 
-        const closeBtn = document.getElementById('editor-close-btn');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', function() {
-                renderEmptyState();
-            });
-        }
+
     }
 
     function handleSaveNote() {
