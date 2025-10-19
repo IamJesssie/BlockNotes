@@ -660,6 +660,14 @@ body {
     border-radius: 12px;
     padding: 6px 10px;
     font-size: 12px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.note-editor-view .on-chain-pill:hover {
+    background: rgba(0, 217, 255, 0.15);
+    border-color: rgba(0, 217, 255, 0.3);
+    transform: translateY(-1px);
 }
 
 

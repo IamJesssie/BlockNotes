@@ -175,15 +175,10 @@ def delete_note(request, note_id):
         return JsonResponse({'success': True})
     return JsonResponse({'success': False, 'error': 'Invalid request'})
 
-# VERIFY RECEIPT
+# VERIFY RECEIPT (JSON API)
 @require_http_methods(["GET"])
 def verify_receipt(request, note_id):
     note = get_object_or_404(Note, id=note_id)
-
-# API Views
-def api_blockchain_status(request):
-    status = get_blockchain_status()
-    return JsonResponse({'is_connected': status})
     receipt = getattr(note, 'blockchain_receipt', None)
 
     if not receipt:
@@ -217,3 +212,63 @@ def api_blockchain_status(request):
     except Exception as e:
         logger.error(f"Error verifying receipt: {str(e)}")
         return JsonResponse({'error': f'Verification failed: {str(e)}'}, status=500)
+
+# BLOCKCHAIN PROOF PAGE
+@login_required
+def blockchain_proof(request, note_id):
+    note = get_object_or_404(Note, id=note_id)
+    receipt = getattr(note, 'blockchain_receipt', None)
+
+    if not receipt:
+        return render(request, 'notes/blockchain_proof.html', {
+            'note': note,
+            'error': 'No blockchain receipt found for this note'
+        })
+
+    try:
+        w3 = Web3(Web3.HTTPProvider('http://127.0.0.1:8545'))
+        tx_hash = receipt.transaction_hash  # This is already a hex string
+        tx_receipt = w3.eth.get_transaction_receipt(tx_hash)
+        tx = w3.eth.get_transaction(tx_hash)
+
+        note_string = f"{note.id}:{note.title}:{note.content}"
+        computed_hash = hashlib.sha256(note_string.encode('utf-8')).hexdigest()
+        hash_match = receipt.hash_value == computed_hash
+
+        # Get gas price in gwei
+        gas_price_gwei = w3.from_wei(tx['gasPrice'], 'gwei') if tx.get('gasPrice') else 0
+        gas_fee_wei = tx_receipt.gasUsed * tx['gasPrice'] if tx_receipt.gasUsed and tx.get('gasPrice') else 0
+        gas_fee_eth = w3.from_wei(gas_fee_wei, 'ether')
+
+        proof_data = {
+            'tx_hash': tx_hash,  # Already a hex string
+            'status': 'Success' if tx_receipt.status == 1 else 'Failed',
+            'gas_used': tx_receipt.gasUsed,
+            'gas_price_gwei': gas_price_gwei,
+            'gas_fee_eth': gas_fee_eth,
+            'block_number': tx_receipt.blockNumber,
+            'input_data': tx['input'].hex()[2:] if tx.get('input') else '',
+            'hash_match': hash_match,
+            'stored_hash': receipt.hash_value,
+            'computed_hash': computed_hash,
+            'note_title': note.title,
+            'note_id': note.id,
+            'timestamp': receipt.timestamp
+        }
+
+        return render(request, 'notes/blockchain_proof.html', {
+            'note': note,
+            'proof_data': proof_data
+        })
+
+    except Exception as e:
+        logger.error(f"Error loading blockchain proof: {str(e)}")
+        return render(request, 'notes/blockchain_proof.html', {
+            'note': note,
+            'error': f'Failed to load blockchain data: {str(e)}'
+        })
+
+# API Views
+def api_blockchain_status(request):
+    status = get_blockchain_status()
+    return JsonResponse({'is_connected': status})

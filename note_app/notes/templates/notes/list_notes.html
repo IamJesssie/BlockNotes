@@ -44,7 +44,7 @@
         </div>
         <div class="notes-list" id="notes-list-container">
             {% for note in notes %}
-            <div class="note-item" data-note-id="{{ note.id }}" data-note-title="{{ note.title }}" data-note-content="{{ note.content }}" data-note-created="{{ note.created_at|date:'c' }}">
+            <div class="note-item" data-note-id="{{ note.id }}" data-note-title="{{ note.title }}" data-note-content="{{ note.content }}" data-note-created="{{ note.created_at|date:'c' }}" data-note-has-receipt="{% if note.blockchain_receipt %}true{% else %}false{% endif %}">
                 <div class="note-item-header">
                     <div class="note-title-group">
                         <div class="note-icon">
@@ -287,7 +287,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // sort handled via custom dropdown
 
-    function getEditorHTML(noteId, title, content, timestamp) {
+    function getEditorHTML(noteId, title, content, timestamp, hasReceipt) {
         const isNewNote = !noteId;
         return `
             <div class="note-editor-view">
@@ -295,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="note-editor-header">
                         <input type="text" id="note-editor-title" class="note-title-input" value="${title || ''}" placeholder="Your note title..." />
                         <div class="header-right">
-                            ${!isNewNote ? '<div class="on-chain-pill"><img src="' + STATIC_LOGOUT_ICON + '" alt="" /><span>On Blockchain</span></div>' : ''}
+                            ${!isNewNote && hasReceipt ? '<a href="/notes/proof/' + noteId + '/" class="on-chain-pill"><img src="' + STATIC_LOGOUT_ICON + '" alt="" /><span>On Blockchain</span></a>' : ''}
                         </div>
                     </div>
 
@@ -319,8 +319,8 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
     }
 
-    function renderEditor(noteId, title, content, timestamp) {
-        mainEditorPane.innerHTML = getEditorHTML(noteId, title, content, timestamp);
+    function renderEditor(noteId, title, content, timestamp, hasReceipt) {
+        mainEditorPane.innerHTML = getEditorHTML(noteId, title, content, timestamp, hasReceipt);
         activeNoteId = noteId;
         attachEditorEventListeners();
     }
@@ -397,7 +397,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 noteItem.dataset.noteId,
                 noteItem.dataset.noteTitle,
                 noteItem.dataset.noteContent,
-                noteItem.querySelector('.note-item-footer span:first-child').textContent
+                noteItem.querySelector('.note-item-footer span:first-child').textContent,
+                noteItem.dataset.noteHasReceipt === 'true'
             );
         }
     });

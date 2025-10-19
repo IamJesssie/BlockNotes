@@ -1,0 +1,280 @@
+{% extends "notes/base.html" %}
+{% load static %}
+
+{% block title %}Blockchain Proof - {{ note.title }}{% endblock %}
+
+{% block content %}
+<div class="notes-app-container">
+    <!-- Sidebar -->
+    <aside class="notes-sidebar">
+        <div class="sidebar-header">
+            <h2 class="sidebar-title">Blockchain Proof</h2>
+            <a href="{% url 'notes:list_notes' %}" class="btn-new-note">
+                <img src="{% static 'notes/img/Icon-7.svg' %}" alt="Back" />
+                Back to Notes
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="note-editor-pane">
+        <div class="blockchain-proof-container">
+            {% if error %}
+            <div class="error-message">
+                <h3>Error Loading Proof</h3>
+                <p>{{ error }}</p>
+                <a href="{% url 'notes:list_notes' %}" class="btn-save">Back to Notes</a>
+            </div>
+            {% else %}
+            <div class="proof-header">
+                <h2>Blockchain Verification for "{{ note.title }}"</h2>
+                <p class="proof-subtitle">This note has been verified and stored on the blockchain</p>
+            </div>
+
+            <div class="proof-content">
+                <div class="proof-section">
+                    <h3>Transaction Details</h3>
+                    <div class="proof-data">
+                        <div class="data-row">
+                            <span class="data-label">Transaction Hash:</span>
+                            <span class="data-value">{{ proof_data.tx_hash }}</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Status:</span>
+                            <span class="data-value status-{{ proof_data.status|lower }}">{{ proof_data.status }}</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Block Number:</span>
+                            <span class="data-value">{{ proof_data.block_number }}</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Gas Used:</span>
+                            <span class="data-value">{{ proof_data.gas_used }}</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Gas Price:</span>
+                            <span class="data-value">{{ proof_data.gas_price_gwei }} Gwei</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Total Gas Fee:</span>
+                            <span class="data-value">{{ proof_data.gas_fee_eth }} ETH</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Timestamp:</span>
+                            <span class="data-value">{{ proof_data.timestamp|date:"M j, Y g:i A" }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="proof-section">
+                    <h3>Data Integrity</h3>
+                    <div class="proof-data">
+                        <div class="data-row">
+                            <span class="data-label">Hash Match:</span>
+                            <span class="data-value integrity-{{ proof_data.hash_match|yesno:'valid,invalid' }}">
+                                {{ proof_data.hash_match|yesno:"Verified,Failed" }}
+                            </span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Stored Hash:</span>
+                            <span class="data-value hash-value">{{ proof_data.stored_hash }}</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Computed Hash:</span>
+                            <span class="data-value hash-value">{{ proof_data.computed_hash }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="proof-section">
+                    <h3>Transaction Input Data</h3>
+                    <div class="input-data-container">
+                        <pre class="input-data">{{ proof_data.input_data }}</pre>
+                    </div>
+                </div>
+
+                <div class="proof-actions">
+                    <a href="{% url 'notes:list_notes' %}" class="btn-save">Back to Notes</a>
+                    <button onclick="navigator.clipboard.writeText(window.location.href)" class="btn-save">Copy Link</button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+</div>
+
+<style>
+.blockchain-proof-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+.proof-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.proof-header h2 {
+    color: var(--text-primary);
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.proof-subtitle {
+    color: var(--text-secondary);
+    font-size: 16px;
+    margin: 0;
+}
+
+.proof-content {
+    background: var(--header-bg);
+    border: 1px solid var(--header-border);
+    border-radius: 16px;
+    padding: 24px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
+.proof-section {
+    margin-bottom: 32px;
+}
+
+.proof-section:last-child {
+    margin-bottom: 0;
+}
+
+.proof-section h3 {
+    color: var(--text-primary);
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--header-border);
+}
+
+.proof-data {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.data-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.data-row:last-child {
+    border-bottom: none;
+}
+
+.data-label {
+    color: var(--text-secondary);
+    font-weight: 500;
+    min-width: 120px;
+}
+
+.data-value {
+    color: var(--text-primary);
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    text-align: right;
+    word-break: break-all;
+}
+
+.status-success {
+    color: #00D9FF;
+    font-weight: 600;
+}
+
+.status-failed {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+.integrity-valid {
+    color: #28a745;
+    font-weight: 600;
+}
+
+.integrity-invalid {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+.hash-value {
+    font-size: 12px;
+    max-width: 300px;
+}
+
+.input-data-container {
+    background: rgba(50, 37, 90, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.input-data {
+    color: var(--text-primary);
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.proof-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--header-border);
+}
+
+.error-message {
+    text-align: center;
+    padding: 48px 24px;
+}
+
+.error-message h3 {
+    color: var(--text-primary);
+    font-size: 20px;
+    margin-bottom: 16px;
+}
+
+.error-message p {
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+    .blockchain-proof-container {
+        padding: 16px;
+    }
+
+    .proof-content {
+        padding: 16px;
+    }
+
+    .data-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .data-value {
+        text-align: left;
+    }
+
+    .proof-actions {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}

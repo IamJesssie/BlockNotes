@@ -10,5 +10,6 @@ urlpatterns = [
     path('edit/<int:note_id>/', views.edit_note, name='edit_note'),
     path('delete/<int:note_id>/', views.delete_note, name='delete_note'),
     path('verify/<int:note_id>/', views.verify_receipt, name='verify_receipt'),
+    path('proof/<int:note_id>/', views.blockchain_proof, name='blockchain_proof'),
     path('api/blockchain_status/', views.api_blockchain_status, name='api_blockchain_status'),
 ]
