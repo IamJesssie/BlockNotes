@@ -1,1 +1,1 @@
-web: python manage.py migrate && python manage.py collectstatic --noinput && gunicorn note_app.wsgi:application --bind 0.0.0.0:$PORT
+web: cd note_app && python manage.py migrate --settings=note_app.railway_settings && python manage.py collectstatic --noinput --settings=note_app.railway_settings && gunicorn note_app.wsgi:application --bind 0.0.0.0:$PORT --settings=note_app.railway_settings
