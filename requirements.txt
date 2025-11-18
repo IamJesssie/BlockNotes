@@ -1,9 +1,0 @@
-Django>=4.0,<5.0
-django-allauth
-PyJWT
-cryptography
-gunicorn
-whitenoise
-psycopg2-binary
-python-decouple
-dj-database-url
