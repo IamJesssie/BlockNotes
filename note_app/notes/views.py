@@ -3,40 +3,33 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from .models import Note, BlockchainReceipt
-from web3 import Web3
+from .cardano_utils import (
+    create_note_hash,
+    build_transaction_data,
+    verify_transaction_via_blockfrost,
+    check_blockchain_connection,
+    get_transaction_metadata,
+)
+from django.conf import settings
 import hashlib
 import logging
 from django.db.models import Q
+from django.contrib.auth.decorators import login_required
+import json
 
 logger = logging.getLogger(__name__)
 
 
 def get_blockchain_status():
     """
-    Checks if Ganache is running and accessible.
-    Tries several common local RPC endpoints and returns True if any respond.
+    Checks if Blockfrost API is accessible.
     """
-    providers = [
-        'http://127.0.0.1:8545',
-        'http://127.0.0.1:7545',
-        'http://127.0.0.1:8546',
-    ]
-    for p in providers:
-        try:
-            # Use a short timeout so status checks are fast
-            w3 = Web3(Web3.HTTPProvider(p, request_kwargs={'timeout': 1}))
-            if w3.is_connected():
-                logger.info(f"Connected to blockchain via {p}")
-                return True
-        except Exception as e:
-            logger.debug(f"Blockchain connection attempt to {p} failed: {e}")
-            continue
-    return False
+    return check_blockchain_connection()
 
-from django.contrib.auth.decorators import login_required
 
 def landing_page(request):
     return render(request, 'account/landing.html')
+
 
 # LIST
 @login_required
@@ -66,6 +59,10 @@ def list_notes(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def create_note_view(request):
+    """
+    Create a note and prepare transaction data for wallet signing.
+    The frontend wallet will sign and submit the transaction, then call confirm_transaction.
+    """
     if not request.user.is_authenticated:
         return JsonResponse({'success': False, 'error': 'Authentication required'}, status=401)
     try:
@@ -75,105 +72,209 @@ def create_note_view(request):
         if not title or not content:
             return JsonResponse({'success': False, 'error': 'Title and content are required'})
 
+        # Create note in database first
         note = Note.objects.create(title=title, content=content)
         logger.info(f"Note created with ID: {note.id}")
 
-        try:
-            w3 = Web3(Web3.HTTPProvider('http://127.0.0.1:8545'))
+        # Prepare transaction data for wallet
+        note_hash = create_note_hash(note.id, title, content, 'CREATE')
+        transaction_data = build_transaction_data(
+            note_id=note.id,
+            title=title,
+            content=content,
+            operation='CREATE',
+            from_address=settings.CARDANO_SENDER_ADDRESS,
+            to_address=settings.CARDANO_RECEIVER_ADDRESS
+        )
 
-            if not w3.is_connected():
-                logger.warning("Blockchain not connected")
-                return JsonResponse({
-                    'success': True, 
-                    'note_id': note.id, 
-                    'message': 'Note saved locally because blockchain is offline.'
-                })
-            
-            # Get accounts from Ganache
-            accounts = w3.eth.accounts
-            if not accounts:
-                logger.warning("No blockchain accounts available")
-                return JsonResponse({
-                    'success': True, 
-                    'note_id': note.id, 
-                    'message': 'Note saved locally because no blockchain accounts are available.'
-                })
-            
-            from_account = accounts[0]
-            note_string = f"{note.id}:{note.title}:{note.content}"
-            note_hash = hashlib.sha256(note_string.encode('utf-8')).hexdigest()
-
-            txn = {
-                'from': from_account,
-                'to': from_account,
-                'value': 0,
-                'input': '0x' + note_hash.encode('utf-8').hex(),
-                'gas': 50000,
-                'gasPrice': w3.to_wei('20', 'gwei'),
-                'nonce': w3.eth.get_transaction_count(from_account),
-                'chainId': 1337,
-            }
-
-            tx_hash = w3.eth.send_transaction(txn)
-            receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
-
-            if receipt.status == 1:
-                BlockchainReceipt.objects.create(
-                    note=note,
-                    transaction_hash=tx_hash.hex(),
-                    block_number=receipt.blockNumber,
-                    hash_value=note_hash
-                )
-                return JsonResponse({
-                    'success': True, 
-                    'note_id': note.id, 
-                    'tx_hash': tx_hash.hex(),
-                    'message': 'Note created with blockchain verification'
-                })
-            else:
-                return JsonResponse({
-                    'success': True, 
-                    'note_id': note.id, 
-                    'message': 'Note saved (blockchain transaction failed)'
-                })
-
-        except Exception as blockchain_error:
-            logger.error(f"Blockchain error: {str(blockchain_error)}")
-            return JsonResponse({
-                'success': True, 
-                'note_id': note.id, 
-                'message': f'Note saved (blockchain error: {str(blockchain_error)})'
-            })
+        return JsonResponse({
+            'success': True,
+            'note_id': note.id,
+            'requires_wallet': True,
+            'transaction_data': transaction_data,
+            'note_hash': note_hash,
+            'message': 'Note created. Please sign transaction with your wallet to record it on blockchain.'
+        })
 
     except Exception as e:
         logger.error(f"Error creating note: {str(e)}")
         return JsonResponse({'success': False, 'error': str(e)})
 
 
+@csrf_exempt
+@require_http_methods(["POST"])
+def confirm_transaction(request):
+    """
+    Endpoint called by frontend after wallet submits transaction.
+    Receives tx_hash and verifies it via Blockfrost, then creates BlockchainReceipt.
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'Authentication required'}, status=401)
+    
+    try:
+        data = json.loads(request.body) if request.body else {}
+        tx_hash = data.get('tx_hash', '').strip()
+        note_id = data.get('note_id')
+        operation = data.get('operation', 'CREATE')
+        signature_data = data.get('signature_data')  # Optional signature data from wallet
+        
+        if not tx_hash or not note_id:
+            return JsonResponse({'success': False, 'error': 'Transaction hash and note ID are required'})
+        
+        # If tx_hash starts with 'pending_', it's a placeholder
+        # Store it but mark as pending
+        is_pending = tx_hash.startswith('pending_')
+        
+        note = get_object_or_404(Note, id=note_id)
+        
+        # If transaction is pending (placeholder), just store the signature data
+        if is_pending:
+            # Store pending transaction with signature for later verification
+            BlockchainReceipt.objects.update_or_create(
+                note=note,
+                defaults={
+                    'transaction_hash': tx_hash,
+                    'block_number': None,  # Will be set when transaction is confirmed
+                    'hash_value': create_note_hash(note.id, note.title, note.content, operation)
+                }
+            )
+            return JsonResponse({
+                'success': True,
+                'tx_hash': tx_hash,
+                'status': 'pending',
+                'message': 'Transaction signature recorded. Full transaction will be created later.'
+            })
+        
+        # Verify transaction via Blockfrost
+        tx_info = verify_transaction_via_blockfrost(tx_hash)
+        
+        if not tx_info:
+            return JsonResponse({
+                'success': False,
+                'error': 'Transaction not found or verification failed'
+            })
+        
+        # Compute hash for verification
+        note_hash = create_note_hash(note.id, note.title, note.content, operation)
+        
+        # Create or update receipt
+        receipt, created = BlockchainReceipt.objects.update_or_create(
+            note=note,
+            defaults={
+                'transaction_hash': tx_hash,
+                'block_number': tx_info.get('block_height'),
+                'hash_value': note_hash
+            }
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'tx_hash': tx_hash,
+            'block_height': tx_info.get('block_height'),
+            'message': 'Transaction confirmed and receipt saved'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error confirming transaction: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)})
+
 
 # EDIT
+@csrf_exempt
 @require_http_methods(["POST"])
 def edit_note(request, note_id):
+    """
+    Update a note and prepare transaction data for wallet signing.
+    """
     if not request.user.is_authenticated:
         return JsonResponse({'success': False, 'error': 'Authentication required'}, status=401)
+    
     note = get_object_or_404(Note, id=note_id)
+    
     if request.method == 'POST':
-        note.title = request.POST.get('title')
-        note.content = request.POST.get('content')
+        title = request.POST.get('title', '').strip()
+        content = request.POST.get('content', '').strip()
+        
+        if not title or not content:
+            return JsonResponse({'success': False, 'error': 'Title and content are required'})
+        
+        # Update note in database
+        note.title = title
+        note.content = content
         note.save()
-        return JsonResponse({'success': True, 'note': {'title': note.title, 'content': note.content}})
+        
+        # Prepare transaction data for wallet
+        note_hash = create_note_hash(note.id, title, content, 'UPDATE')
+        transaction_data = build_transaction_data(
+            note_id=note.id,
+            title=title,
+            content=content,
+            operation='UPDATE',
+            from_address=settings.CARDANO_SENDER_ADDRESS,
+            to_address=settings.CARDANO_RECEIVER_ADDRESS
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'note_id': note.id,
+            'note': {'title': note.title, 'content': note.content},
+            'requires_wallet': True,
+            'transaction_data': transaction_data,
+            'note_hash': note_hash,
+            'operation': 'UPDATE',
+            'message': 'Note updated. Please sign transaction with your wallet to record it on blockchain.'
+        })
+    
     return JsonResponse({'success': False, 'error': 'Invalid request'})
 
+
 # DELETE
+@csrf_exempt
 @require_http_methods(["POST"])
 def delete_note(request, note_id):
+    """
+    Delete a note and prepare transaction data for wallet signing.
+    Note is marked for deletion but actual deletion happens after transaction confirmation.
+    """
     if not request.user.is_authenticated:
         return JsonResponse({'success': False, 'error': 'Authentication required'}, status=401)
+    
     note = get_object_or_404(Note, id=note_id)
+    
     if request.method == 'POST':
+        # Store note data before deletion for transaction
+        note_title = note.title
+        note_content = note.content
+        
+        # Prepare transaction data before deletion
+        note_hash = create_note_hash(note.id, note_title, note_content, 'DELETE')
+        transaction_data = build_transaction_data(
+            note_id=note.id,
+            title=note_title,
+            content=note_content,
+            operation='DELETE',
+            from_address=settings.CARDANO_SENDER_ADDRESS,
+            to_address=settings.CARDANO_RECEIVER_ADDRESS
+        )
+        
+        # Store note ID before deletion
+        deleted_note_id = note.id
+        
+        # Delete note from database
         note.delete()
-        return JsonResponse({'success': True})
+        
+        return JsonResponse({
+            'success': True,
+            'note_id': deleted_note_id,
+            'requires_wallet': True,
+            'transaction_data': transaction_data,
+            'note_hash': note_hash,
+            'operation': 'DELETE',
+            'message': 'Note deleted. Please sign transaction with your wallet to record it on blockchain.'
+        })
+    
     return JsonResponse({'success': False, 'error': 'Invalid request'})
+
 
 # VERIFY RECEIPT (JSON API)
 @require_http_methods(["GET"])
@@ -185,33 +286,38 @@ def verify_receipt(request, note_id):
         return JsonResponse({'error': 'No receipt found for this note'}, status=404)
 
     try:
-        w3 = Web3(Web3.HTTPProvider('http://127.0.0.1:8545'))
         tx_hash = receipt.transaction_hash
-        tx_receipt = w3.eth.get_transaction_receipt(tx_hash)
-        tx = w3.eth.get_transaction(tx_hash)
-
-        note_string = f"{note.id}:{note.title}:{note.content}"
-        computed_hash = hashlib.sha256(note_string.encode('utf-8')).hexdigest()
-        hash_match = receipt.hash_value == computed_hash
-
-        # Convert all HexBytes and other objects to JSON-serializable types
+        tx_info = verify_transaction_via_blockfrost(tx_hash)
+        
+        if not tx_info:
+            return JsonResponse({'error': 'Transaction not found on blockchain'}, status=404)
+        
+        # Compute hash for verification
+        note_hash = create_note_hash(note.id, note.title, note.content, 'CREATE')
+        hash_match = receipt.hash_value == note_hash
+        
+        # Get metadata
+        metadata = get_transaction_metadata(tx_hash) or {}
+        
         response_data = {
-            'tx_hash': str(tx_hash) if tx_hash else 'Unknown',
-            'status': int(tx_receipt.status) if hasattr(tx_receipt, 'status') and tx_receipt.status is not None else 0,
-            'gas_used': int(tx_receipt.gasUsed) if hasattr(tx_receipt, 'gasUsed') and tx_receipt.gasUsed is not None else 0,
-            'block_number': int(tx_receipt.blockNumber) if hasattr(tx_receipt, 'blockNumber') and tx_receipt.blockNumber is not None else 0,
-            'input_data': tx['input'].hex()[2:] if tx.get('input') else '',
+            'tx_hash': tx_hash,
+            'status': tx_info.get('status', 'unknown'),
+            'block_height': tx_info.get('block_height'),
+            'block_time': tx_info.get('block_time'),
+            'fees': tx_info.get('fees', '0'),
             'hash_match': hash_match,
             'stored_hash': receipt.hash_value,
-            'computed_hash': computed_hash,
+            'computed_hash': note_hash,
             'note_title': note.title,
-            'note_id': note.id
+            'note_id': note.id,
+            'metadata': metadata
         }
 
         return JsonResponse(response_data)
     except Exception as e:
         logger.error(f"Error verifying receipt: {str(e)}")
         return JsonResponse({'error': f'Verification failed: {str(e)}'}, status=500)
+
 
 # BLOCKCHAIN PROOF PAGE
 @login_required
@@ -226,34 +332,41 @@ def blockchain_proof(request, note_id):
         })
 
     try:
-        w3 = Web3(Web3.HTTPProvider('http://127.0.0.1:8545'))
-        tx_hash = receipt.transaction_hash  # This is already a hex string
-        tx_receipt = w3.eth.get_transaction_receipt(tx_hash)
-        tx = w3.eth.get_transaction(tx_hash)
-
-        note_string = f"{note.id}:{note.title}:{note.content}"
-        computed_hash = hashlib.sha256(note_string.encode('utf-8')).hexdigest()
-        hash_match = receipt.hash_value == computed_hash
-
-        # Get gas price in gwei
-        gas_price_gwei = w3.from_wei(tx['gasPrice'], 'gwei') if tx.get('gasPrice') else 0
-        gas_fee_wei = tx_receipt.gasUsed * tx['gasPrice'] if tx_receipt.gasUsed and tx.get('gasPrice') else 0
-        gas_fee_eth = w3.from_wei(gas_fee_wei, 'ether')
-
+        tx_hash = receipt.transaction_hash
+        tx_info = verify_transaction_via_blockfrost(tx_hash)
+        
+        if not tx_info:
+            return render(request, 'notes/blockchain_proof.html', {
+                'note': note,
+                'error': 'Transaction not found on blockchain'
+            })
+        
+        # Compute hash for verification
+        note_hash = create_note_hash(note.id, note.title, note.content, 'CREATE')
+        hash_match = receipt.hash_value == note_hash
+        
+        # Get metadata
+        metadata = get_transaction_metadata(tx_hash) or {}
+        
+        # Convert fees from lovelace to ADA (1 ADA = 1,000,000 lovelace)
+        fees_lovelace = int(tx_info.get('fees', 0))
+        fees_ada = fees_lovelace / 1_000_000 if fees_lovelace else 0
+        
         proof_data = {
-            'tx_hash': tx_hash,  # Already a hex string
-            'status': 'Success' if tx_receipt.status == 1 else 'Failed',
-            'gas_used': tx_receipt.gasUsed,
-            'gas_price_gwei': gas_price_gwei,
-            'gas_fee_eth': gas_fee_eth,
-            'block_number': tx_receipt.blockNumber,
-            'input_data': tx['input'].hex()[2:] if tx.get('input') else '',
+            'tx_hash': tx_hash,
+            'status': 'Success' if tx_info.get('status') == 'confirmed' else 'Pending',
+            'fees_lovelace': fees_lovelace,
+            'fees_ada': fees_ada,
+            'block_height': tx_info.get('block_height'),
+            'block_time': tx_info.get('block_time'),
+            'slot': tx_info.get('slot'),
             'hash_match': hash_match,
             'stored_hash': receipt.hash_value,
-            'computed_hash': computed_hash,
+            'computed_hash': note_hash,
             'note_title': note.title,
             'note_id': note.id,
-            'timestamp': receipt.timestamp
+            'timestamp': receipt.timestamp,
+            'metadata': metadata
         }
 
         return render(request, 'notes/blockchain_proof.html', {
@@ -268,7 +381,9 @@ def blockchain_proof(request, note_id):
             'error': f'Failed to load blockchain data: {str(e)}'
         })
 
+
 # API Views
+@require_http_methods(["GET"])
 def api_blockchain_status(request):
     status = get_blockchain_status()
     return JsonResponse({'is_connected': status})

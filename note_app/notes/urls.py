@@ -12,4 +12,5 @@ urlpatterns = [
     path('verify/<int:note_id>/', views.verify_receipt, name='verify_receipt'),
     path('proof/<int:note_id>/', views.blockchain_proof, name='blockchain_proof'),
     path('api/blockchain_status/', views.api_blockchain_status, name='api_blockchain_status'),
+    path('api/confirm_transaction/', views.confirm_transaction, name='confirm_transaction'),
 ]

@@ -1,6 +1,5 @@
 {% extends "notes/base.html" %}
 {% load static %}
-{% load socialaccount %}
 
 {% block body_class %}landing-page-body{% endblock %}
 
@@ -59,7 +58,7 @@
         </div>
 
         <div class="signin-block">
-            <a href="{% provider_login_url 'google' %}" class="signin-button">
+            <a href="/accounts/login/" class="signin-button">
                 <svg xmlns="http://www.w3.org/2000/svg" width="17" height="16" viewBox="0 0 17 16" fill="none">
                   <g clip-path="url(#clip0_1_852)">
                     <path d="M15.165 8.16669C15.165 7.64669 15.1183 7.14669 15.0317 6.66669H8.125V9.50669H12.0717C11.8983 10.42 11.3783 11.1934 10.5983 11.7134V13.56H12.9783C14.365 12.28 15.165 10.4 15.165 8.16669Z" fill="white"/>
@@ -72,7 +71,7 @@
                       <rect width="16" height="16" fill="white" transform="translate(0.125)"/>
                     </clipPath>
                   </defs>
-                </svg> Sign in with Google
+                </svg> Sign in
             </a>
             <p class="terms-text">By signing in, you agree to our Terms of Service and Privacy Policy</p>
         </div>

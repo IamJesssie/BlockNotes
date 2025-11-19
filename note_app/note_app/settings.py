@@ -85,7 +85,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'Blocknotes',
         'USER': 'root',
-        'PASSWORD': 'dblapuredemo123',
+        'PASSWORD': '119882090321Luis!',
         'HOST': '127.0.0.1',
         'PORT': '3306',
         'OPTIONS': {'init_command': "set sql_mode='strict_trans_tables'"},
@@ -162,3 +162,11 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 
 SOCIALACCOUNT_LOGIN_ON_GET = True
+
+# Cardano/Blockfrost Configuration
+BLOCKFROST_PROJECT_ID = 'previewzR4AsrnHPxczC2GwiVdyZL8vaiIfMgvZ'
+BLOCKFROST_API_URL = 'https://cardano-preview.blockfrost.io/api/v0'
+CARDANO_NETWORK = 'preview'  # 'mainnet' or 'preview' or 'preprod'
+# Wallet addresses
+CARDANO_SENDER_ADDRESS = 'addr_test1qqw6q8ppcsk0g4xu25qk5qlevxl4zv65pp25fvpp7n4hfrfelx36nl6ht5nlz7gryrdhft03pmeuf0xcec5cccrt5lcqaelfdz'
+CARDANO_RECEIVER_ADDRESS = 'addr_test1qqm4gcwfhr8veflyf4h5kwn9ee4el3v9dgye4ydfpeqt4kwh6ur0r55h0v6x7vfmmc5pzgrschkytd8jgqgyacy67wksuqqt9c'

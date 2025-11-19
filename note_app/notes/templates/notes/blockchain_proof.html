@@ -44,21 +44,23 @@
                             <span class="data-value status-{{ proof_data.status|lower }}">{{ proof_data.status }}</span>
                         </div>
                         <div class="data-row">
-                            <span class="data-label">Block Number:</span>
-                            <span class="data-value">{{ proof_data.block_number }}</span>
+                            <span class="data-label">Block Height:</span>
+                            <span class="data-value">{{ proof_data.block_height|default:"Pending" }}</span>
                         </div>
                         <div class="data-row">
-                            <span class="data-label">Gas Used:</span>
-                            <span class="data-value">{{ proof_data.gas_used }}</span>
+                            <span class="data-label">Slot:</span>
+                            <span class="data-value">{{ proof_data.slot|default:"N/A" }}</span>
                         </div>
                         <div class="data-row">
-                            <span class="data-label">Gas Price:</span>
-                            <span class="data-value">{{ proof_data.gas_price_gwei }} Gwei</span>
+                            <span class="data-label">Transaction Fee:</span>
+                            <span class="data-value">{{ proof_data.fees_ada|default:"0" }} ADA ({{ proof_data.fees_lovelace|default:"0" }} lovelace)</span>
                         </div>
+                        {% if proof_data.block_time %}
                         <div class="data-row">
-                            <span class="data-label">Total Gas Fee:</span>
-                            <span class="data-value">{{ proof_data.gas_fee_eth }} ETH</span>
+                            <span class="data-label">Block Time:</span>
+                            <span class="data-value">{{ proof_data.block_time|date:"M j, Y g:i A" }}</span>
                         </div>
+                        {% endif %}
                         <div class="data-row">
                             <span class="data-label">Timestamp:</span>
                             <span class="data-value">{{ proof_data.timestamp|date:"M j, Y g:i A" }}</span>
@@ -86,12 +88,14 @@
                     </div>
                 </div>
 
+                {% if proof_data.metadata %}
                 <div class="proof-section">
-                    <h3>Transaction Input Data</h3>
+                    <h3>Transaction Metadata</h3>
                     <div class="input-data-container">
-                        <pre class="input-data">{{ proof_data.input_data }}</pre>
+                        <pre class="input-data">{{ proof_data.metadata|pprint }}</pre>
                     </div>
                 </div>
+                {% endif %}
 
                 <div class="proof-actions">
                     <a href="{% url 'notes:list_notes' %}" class="btn-save">Back to Notes</a>
