@@ -166,7 +166,7 @@ LOGOUT_REDIRECT_URL = '/'
 # Cardano/Blockfrost Configuration
 BLOCKFROST_PROJECT_ID = 'previewzR4AsrnHPxczC2GwiVdyZL8vaiIfMgvZ'
 BLOCKFROST_API_URL = 'https://cardano-preview.blockfrost.io/api/v0'
-CARDANO_NETWORK = 'preview'  # 'mainnet' or 'preview' or 'preprod'
+CARDANO_NETWORK = 'preview' 
 # Wallet addresses
 CARDANO_SENDER_ADDRESS = 'addr_test1qqw6q8ppcsk0g4xu25qk5qlevxl4zv65pp25fvpp7n4hfrfelx36nl6ht5nlz7gryrdhft03pmeuf0xcec5cccrt5lcqaelfdz'
 CARDANO_RECEIVER_ADDRESS = 'addr_test1qqm4gcwfhr8veflyf4h5kwn9ee4el3v9dgye4ydfpeqt4kwh6ur0r55h0v6x7vfmmc5pzgrschkytd8jgqgyacy67wksuqqt9c'

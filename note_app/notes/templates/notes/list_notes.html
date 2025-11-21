@@ -14,12 +14,7 @@
                 New Note
             </a>
         </div>
-        <div class="sidebar-status">
-            <div class="blockchain-status-widget {% if blockchain_status %}online{% else %}offline{% endif %}">
-                <span class="glowing-dot"></span>
-                <span id="blockchain-status-text">{% if blockchain_status %}Blockchain Online{% else %}Blockchain Offline{% endif %}</span>
-            </div>
-        </div>
+        
         <div class="sidebar-search">
             <img src="{% static 'notes/img/Icon-5.svg' %}" alt="Search" class="search-icon" />
             <input type="text" placeholder="Search notes...">
@@ -740,7 +735,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 tx_hash: txHash,
                 note_id: noteId,
                 operation: operation,
-                signature_data: signatureData
+                metadata_label: "674", 
+                signature_data: signatureData,
             };
             
             // Test JSON serialization before sending

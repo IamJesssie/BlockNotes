@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@blaze-cardano/sdk": "^0.2.44"
+  }
+}

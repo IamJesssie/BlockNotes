@@ -14,8 +14,9 @@ from django.conf import settings
 import hashlib
 import logging
 from django.db.models import Q
-from django.contrib.auth.decorators import login_required
 import json
+from django.db import transaction
+
 
 logger = logging.getLogger(__name__)
 
@@ -33,14 +34,15 @@ def landing_page(request):
 
 # LIST
 def list_notes(request):
-    sort_by = request.GET.get("sort", "-created_at")  
+    sort_by = request.GET.get("sort", "-created_at")
     search_query = request.GET.get("q", "")
 
     valid_sort_fields = ["created_at", "-created_at", "title", "-title"]
     if sort_by not in valid_sort_fields:
         sort_by = "-created_at"
 
-    notes = Note.objects.all()
+    # Exclude notes that have been marked deleted
+    notes = Note.objects.filter(is_deleted=False)
     if search_query:
         notes = notes.filter(Q(title__icontains=search_query) | Q(content__icontains=search_query))
     notes = notes.order_by(sort_by)
@@ -53,6 +55,7 @@ def list_notes(request):
         "search_query": search_query,
         "sort_by": sort_by
     })
+
 
 
 @csrf_exempt
@@ -95,15 +98,26 @@ def create_note_view(request):
 @require_http_methods(["POST"])
 def confirm_transaction(request):
     try:
-        data = json.loads(request.body or "{}")
+        data = json.loads(request.body) if request.body else {}
         tx_hash = data.get('tx_hash', '').strip()
         note_id = data.get('note_id')
         operation = data.get('operation', 'CREATE')
+        signature_data = data.get('signature_data')
+        # NEW: default metadata label if frontend didn't send one
+        metadata_label = data.get('metadata_label', '674')
 
         if not tx_hash or not note_id:
             return JsonResponse({'success': False, 'error': 'Transaction hash and note ID are required'})
 
+        # NOTE: the note may be soft-deleted (is_deleted=True) but still exists
         note = get_object_or_404(Note, id=note_id)
+
+        # signature_data (optional)
+        signature_data = data.get('signature_data') or {}
+        wallet_sig = signature_data.get('signature') or None
+        wallet_key = signature_data.get('key') or signature_data.get('publicKey') or None
+        wallet_addr = signature_data.get('address') or None
+        signed_payload = signature_data.get('payload') or None
 
         # Pending placeholder tx
         is_pending = tx_hash.startswith("pending_")
@@ -113,11 +127,19 @@ def confirm_transaction(request):
                 defaults={
                     'transaction_hash': tx_hash,
                     'block_number': None,
-                    'hash_value': create_note_hash(note.id, note.title, note.content, operation)
+                    'hash_value': create_note_hash(note.id, note.title, note.content, operation),
+                    'metadata_label': metadata_label,
+                    'action': operation,
+                    'wallet_signature': wallet_sig,
+                    'wallet_public_key': wallet_key,
+                    'wallet_address': wallet_addr,
+                    'signed_payload': signed_payload
                 }
             )
+
             return JsonResponse({'success': True, 'tx_hash': tx_hash, 'status': 'pending'})
 
+        # Verify transaction via Blockfrost
         tx_info = verify_transaction_via_blockfrost(tx_hash)
         if not tx_info:
             return JsonResponse({'success': False, 'error': 'Transaction verification failed'})
@@ -129,15 +151,26 @@ def confirm_transaction(request):
             defaults={
                 'transaction_hash': tx_hash,
                 'block_number': tx_info.get('block_height'),
-                'hash_value': note_hash
+                'hash_value': note_hash,
+                'action': operation,
+                'wallet_signature': wallet_sig,
+                'wallet_public_key': wallet_key,
+                'wallet_address': wallet_addr,
+                'signed_payload': signed_payload
             }
         )
 
-        return JsonResponse({'success': True, 'tx_hash': tx_hash})
+        return JsonResponse({
+            'success': True,
+            'tx_hash': tx_hash,
+            'block_height': tx_info.get('block_height'),
+            'message': 'Transaction confirmed and receipt saved'
+        })
 
     except Exception as e:
         logger.error(f"Error confirming transaction: {str(e)}")
         return JsonResponse({'success': False, 'error': str(e)})
+
 
 
 
@@ -191,6 +224,7 @@ def delete_note(request, note_id):
     try:
         note = get_object_or_404(Note, id=note_id)
 
+        # prepare transaction data BEFORE marking deleted
         note_hash = create_note_hash(note.id, note.title, note.content, 'DELETE')
         transaction_data = build_transaction_data(
             note_id=note.id,
@@ -201,12 +235,13 @@ def delete_note(request, note_id):
             to_address=settings.CARDANO_RECEIVER_ADDRESS
         )
 
-        deleted_id = note.id
-        note.delete()
+        # Soft-delete: mark deleted but keep DB row so receipt can be attached
+        note.is_deleted = True
+        note.save()
 
         return JsonResponse({
             'success': True,
-            'note_id': deleted_id,
+            'note_id': note.id,
             'requires_wallet': True,
             'transaction_data': transaction_data,
             'note_hash': note_hash,
@@ -216,6 +251,7 @@ def delete_note(request, note_id):
     except Exception as e:
         logger.error(f"Error deleting note: {str(e)}")
         return JsonResponse({'success': False, 'error': str(e)})
+
 
 
 
@@ -329,3 +365,147 @@ def blockchain_proof(request, note_id):
 def api_blockchain_status(request):
     status = get_blockchain_status()
     return JsonResponse({'is_connected': status})
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def prepare_transaction_view(request):
+    """
+    Backend helper to prepare a transaction record. The frontend will build/sign/submit.
+    This endpoint creates a pending receipt record (placeholder) if note exists,
+    and returns tx template info.
+    """
+    try:
+        data = json.loads(request.body.decode('utf-8') if request.body else '{}')
+        tx_data = data.get('transaction_data') or {}
+        metadata_label = data.get('metadata_label', '721')
+        metadata = data.get('metadata', {})
+        receiver_address = data.get('receiver_address')
+        min_lovelace = int(data.get('min_lovelace', 1))
+        network = data.get('network', 'testnet')
+
+        note_id = tx_data.get('note_id')
+        if not note_id:
+            return JsonResponse({'success': False, 'error': 'note_id required'}, status=400)
+
+        note = None
+        try:
+            note = Note.objects.get(id=note_id)
+        except Note.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'No Note matches the given query.'}, status=404)
+
+        # Create a pending tx_hash placeholder
+        tx_hash = f"pending_{int(time.time()*1000)}_{(tx_data.get('note_hash') or '')[:16]}"
+
+        # Persist pending receipt (safe defaults) so frontend can continue
+        # Use update_or_create to avoid duplicates
+        defaults = {
+            'transaction_hash': tx_hash,
+            'block_number': None,
+            'hash_value': tx_data.get('note_hash') or '',
+            'metadata_label': metadata_label,
+            'action': tx_data.get('operation', 'CREATE'),
+            'signed_payload': tx_data.get('note_hash') or '',
+            'wallet_address': None,
+            'wallet_public_key': None,
+            'wallet_signature': None,
+            'timestamp': timezone.now()
+        }
+        BlockchainReceipt.objects.update_or_create(note=note, defaults=defaults)
+
+        # Return prepared info the frontend expects
+        return JsonResponse({
+            'success': True,
+            'tx_hash': tx_hash,
+            'network': network,
+            'metadata_label': metadata_label,
+            'metadata': metadata,
+            'min_lovelace': min_lovelace,
+            'message': 'Prepared pending transaction placeholder. Sign on frontend and call confirm_transaction.'
+        })
+    except Exception as e:
+        logger.exception("prepare_transaction failed")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def confirm_transaction(request):
+    """
+    Confirm transaction (called after frontend signs and/or submits tx).
+    Accepts signature_data and metadata info.
+    """
+    try:
+        data = json.loads(request.body.decode('utf-8') if request.body else '{}')
+        tx_hash = data.get('tx_hash', '').strip()
+        note_id = data.get('note_id')
+        operation = data.get('operation', 'CREATE')
+        signature_data = data.get('signature_data') or {}
+        metadata_label = data.get('metadata_label', None)
+        metadata = data.get('metadata', None)
+        network = data.get('network', 'testnet')
+
+        if not tx_hash or not note_id:
+            return JsonResponse({'success': False, 'error': 'Transaction hash and note ID are required'}, status=400)
+
+        note = get_object_or_404(Note, id=note_id)
+
+        # Try to verify transaction on-chain if tx_hash isn't placeholder
+        is_pending = str(tx_hash).startswith('pending_')
+
+        if is_pending:
+            # Update existing pending receipt with signature info
+            receipt, created = BlockchainReceipt.objects.update_or_create(
+                note=note,
+                defaults={
+                    'transaction_hash': tx_hash,
+                    'block_number': None,
+                    'hash_value': create_note_hash(note.id, note.title, note.content, operation),
+                    'metadata_label': metadata_label or getattr(receipt, 'metadata_label', '721'),
+                    'action': operation,
+                    'wallet_signature': signature_data.get('signature') if signature_data else None,
+                    'wallet_public_key': signature_data.get('key') if signature_data else None,
+                    'wallet_address': signature_data.get('address') if signature_data else None,
+                    'signed_payload': signature_data.get('payload') if signature_data else None,
+                    'network': network,
+                }
+            )
+            return JsonResponse({
+                'success': True,
+                'tx_hash': tx_hash,
+                'status': 'pending',
+                'message': 'Signature recorded; transaction pending.'
+            })
+
+        # If not pending, attempt on-chain verification (you had verify_transaction_via_blockfrost)
+        tx_info = verify_transaction_via_blockfrost(tx_hash)
+        if not tx_info:
+            return JsonResponse({'success': False, 'error': 'Transaction not found or verification failed'}, status=404)
+
+        note_hash = create_note_hash(note.id, note.title, note.content, operation)
+
+        # Save receipt details
+        receipt, created = BlockchainReceipt.objects.update_or_create(
+            note=note,
+            defaults={
+                'transaction_hash': tx_hash,
+                'block_number': tx_info.get('block_height'),
+                'hash_value': note_hash,
+                'metadata_label': metadata_label or '721',
+                'action': operation,
+                'wallet_signature': signature_data.get('signature') if signature_data else None,
+                'wallet_public_key': signature_data.get('key') if signature_data else None,
+                'wallet_address': signature_data.get('address') if signature_data else None,
+                'signed_payload': signature_data.get('payload') if signature_data else None,
+                'network': network,
+            }
+        )
+
+        return JsonResponse({
+            'success': True,
+            'tx_hash': tx_hash,
+            'block_height': tx_info.get('block_height'),
+            'message': 'Transaction confirmed and receipt saved'
+        })
+    except Exception as e:
+        logger.exception("confirm_transaction failed")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
