@@ -364,7 +364,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             if (!walletAvailable) {
                                 console.warn('Lace wallet not detected. Note deleted locally.');
                                 alert('Note deleted successfully! To record on blockchain, please install and enable Lace wallet, then try again.');
-                                window.location.reload();
+                                
                                 return;
                             }
                             
@@ -378,7 +378,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                     
-                    window.location.reload();
                 } catch (error) {
                     console.error('Delete error:', error);
                     alert('Delete failed.');
@@ -428,7 +427,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             enable: window.cardano?.lace?.enable
                         });
                         alert('Note saved successfully! To record on blockchain, please install and enable Lace wallet, then try again.');
-                        window.location.reload();
+                        
                         return;
                     }
                     
@@ -446,7 +445,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Reload page to show updated note (only after wallet transaction completes or is skipped)
             console.log('Reloading page to show updated note...');
-            window.location.reload();
+            
         } catch (error) {
             console.error('Error saving note:', error);
             alert('Error saving note.');

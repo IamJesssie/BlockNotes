@@ -251,6 +251,123 @@
       }
       return confirmResp;
     }
+
+        // NEW: Full real-transaction flow (build → sign → submit)
+    async processAndSubmitTransaction(transactionData, receiverAddress, minLovelace = 1) {
+
+      if (!this.isConnected()) {
+        await this.connect(this.selectedWallet || 'lace');
+      }
+
+      const walletApi = this.walletApi;
+      if (!walletApi) throw new Error("Wallet API not available");
+
+      console.log("🔧 Preparing unsigned transaction via backend…");
+
+      const prepResp = await fetch('/notes/api/prepare_transaction/', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify({
+            transaction_data: {
+                ...transactionData,
+                wallet_address: this.walletAddress  // REQUIRED
+            },
+            receiver_address: receiverAddress,
+            min_lovelace: minLovelace
+        })
+
+      }).then(r => r.json());
+
+      if (!prepResp.success) throw new Error(prepResp.error);
+      const unsignedTxCborHex = prepResp.transaction_cbor;
+      if (!unsignedTxCborHex) throw new Error("Backend didn't return CBOR");
+
+      console.log("🖊 Signing transaction in wallet…");
+
+      let signedTxCbor;
+      try {
+        const signResult = await walletApi.signTx(unsignedTxCborHex, false);
+
+        if (typeof signResult === 'string') {
+          signedTxCbor = signResult;
+        } else if (signResult instanceof Uint8Array) {
+          signedTxCbor = Array.from(signResult)
+            .map(b => b.toString(16).padStart(2, '0'))
+            .join('');
+        } else {
+          console.warn("Wallet returned witness set instead of full tx");
+          const res = await fetch('/notes/api/assemble_signed_tx/', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({
+              unsigned_cbor: unsignedTxCborHex,
+              sign_result: signResult
+            })
+          }).then(r => r.json());
+
+          if (!res.success) throw new Error(res.error);
+          signedTxCbor = res.signed_tx_cbor;
+        }
+      } catch (e) {
+        console.error("Wallet signTx error", e);
+        throw e;
+      }
+
+      console.log("📡 Submitting transaction to blockchain…");
+
+      let txHash;
+      try {
+        txHash = await walletApi.submitTx(signedTxCbor);
+
+        if (txHash instanceof Uint8Array) {
+          txHash = Array.from(txHash)
+            .map(b => b.toString(16).padStart(2, '0'))
+            .join('');
+        }
+      } catch (err) {
+        console.warn("Wallet submit failed — trying backend submit", err);
+
+        const fallback = await fetch('/notes/api/submit_signed_tx/', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+          },
+          body: JSON.stringify({ signed_tx_cbor: signedTxCbor })
+        }).then(r => r.json());
+
+        if (!fallback.success) throw new Error(fallback.error);
+        txHash = fallback.tx_hash;
+      }
+
+      console.log("🎉 Transaction submitted:", txHash);
+
+      await fetch('/notes/api/confirm_transaction/', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify({
+          tx_hash: txHash,
+          note_id: transactionData.note_id,
+          operation: transactionData.operation
+        })
+      });
+
+      return { success: true, tx_hash: txHash };
+    }
+
   }
 
   // expose
