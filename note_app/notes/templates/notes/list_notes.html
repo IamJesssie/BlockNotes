@@ -17,7 +17,8 @@
         <div class="sidebar-status">
             <div class="blockchain-status-widget {% if blockchain_status %}online{% else %}offline{% endif %}">
                 <span class="glowing-dot"></span>
-                <span id="blockchain-status-text">{% if blockchain_status %}Blockchain Online{% else %}Blockchain Offline{% endif %}</span>
+                <span id="blockchain-status-text">{% if blockchain_status %}Blockchain Online{% else %}Blockchain
+                    Offline{% endif %}</span>
             </div>
         </div>
         <div class="sidebar-search">
@@ -26,25 +27,29 @@
         </div>
         <div class="sidebar-sort">
             <label for="sort-select" class="visually-hidden">Sort notes</label>
-        <div class="sort-select-wrapper">
-            <div class="sort-dropdown" id="sort-dropdown" data-initial-sort="{{ sort_by }}">
-                <button class="sort-dropdown-toggle" id="sort-dropdown-toggle" aria-haspopup="true" aria-expanded="false">
-                    <img src="{% static 'notes/img/Icon-4.svg' %}" alt="Sort" class="sort-icon" style="width:16px; height:16px; margin-right:6px; vertical-align:middle;" />
-                    <span id="sort-current">Newest</span>
-                </button>
-                <ul class="sort-dropdown-menu" id="sort-dropdown-menu" role="menu" aria-hidden="true">
-                    <li role="menuitem" data-value="-created_at" class="sort-option">Newest</li>
-                    <li role="menuitem" data-value="created_at" class="sort-option">Oldest</li>
-                    <li role="menuitem" data-value="title" class="sort-option">A-Z</li>
-                    <li role="menuitem" data-value="-title" class="sort-option">Z-A</li>
-                </ul>
+            <div class="sort-select-wrapper">
+                <div class="sort-dropdown" id="sort-dropdown" data-initial-sort="{{ sort_by }}">
+                    <button class="sort-dropdown-toggle" id="sort-dropdown-toggle" aria-haspopup="true"
+                        aria-expanded="false">
+                        <img src="{% static 'notes/img/Icon-4.svg' %}" alt="Sort" class="sort-icon"
+                            style="width:16px; height:16px; margin-right:6px; vertical-align:middle;" />
+                        <span id="sort-current">Newest</span>
+                    </button>
+                    <ul class="sort-dropdown-menu" id="sort-dropdown-menu" role="menu" aria-hidden="true">
+                        <li role="menuitem" data-value="-created_at" class="sort-option">Newest</li>
+                        <li role="menuitem" data-value="created_at" class="sort-option">Oldest</li>
+                        <li role="menuitem" data-value="title" class="sort-option">A-Z</li>
+                        <li role="menuitem" data-value="-title" class="sort-option">Z-A</li>
+                    </ul>
+                </div>
             </div>
-        </div>
             <span class="note-count" id="note-count">{{ notes|length }} notes</span>
         </div>
         <div class="notes-list" id="notes-list-container">
             {% for note in notes %}
-            <div class="note-item" data-note-id="{{ note.id }}" data-note-title="{{ note.title }}" data-note-content="{{ note.content }}" data-note-created="{{ note.created_at|date:'c' }}" data-note-has-receipt="{% if note.blockchain_receipt %}true{% else %}false{% endif %}">
+            <div class="note-item" data-note-id="{{ note.id }}" data-note-title="{{ note.title }}"
+                data-note-content="{{ note.content }}" data-note-created="{{ note.created_at|date:'c' }}"
+                data-note-has-receipt="{% if note.blockchain_receipt %}true{% else %}false{% endif %}">
                 <div class="note-item-header">
                     <div class="note-title-group">
                         <div class="note-icon">
@@ -69,7 +74,7 @@
                 <div class="note-item-footer">
                     <span>{{ note.created_at|timesince }} ago</span>
                     {% if note.blockchain_receipt %}
-                        <span class="on-chain-badge">On-chain</span>
+                    <span class="on-chain-badge">On-chain</span>
                     {% endif %}
                 </div>
             </div>
@@ -80,10 +85,10 @@
     <!-- Main Content -->
     <main class="note-editor-pane" id="main-editor-pane">
         <div class="empty-state-editor">
-        <div class="empty-state-icon-wrapper">
-            <img src="{% static 'notes/img/Icon-1.svg' %}" alt="Note editor" />
-            <div class="icon-gradient-fill" aria-hidden="true"></div>
-        </div>
+            <div class="empty-state-icon-wrapper">
+                <img src="{% static 'notes/img/Icon-1.svg' %}" alt="Note editor" />
+                <div class="icon-gradient-fill" aria-hidden="true"></div>
+            </div>
             <h3>Select a note to view it</h3>
             <p>Or create a new one to get started</p>
         </div>
@@ -92,7 +97,7 @@
 </div>
 
 <!-- Logout modal -->
-<div class="modal-backdrop" id="logout-backdrop" aria-hidden="true" role="presentation">
+<div class="app-modal-backdrop" id="logout-backdrop" aria-hidden="true" role="presentation">
     <div class="modal-centered" role="dialog" aria-modal="true" aria-labelledby="logout-title">
         <div class="modal-body">
             <h2 id="logout-title">Sign out</h2>
@@ -120,14 +125,14 @@
 
 {% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const noteListContainer = document.getElementById('notes-list-container');
-    const mainEditorPane = document.getElementById('main-editor-pane');
-    const newNoteBtn = document.getElementById('new-note-btn');
-    let activeNoteId = null;
-    const STATIC_LOGOUT_ICON = "{% static 'notes/img/Image-8.svg' %}";
+    document.addEventListener('DOMContentLoaded', function () {
+        const noteListContainer = document.getElementById('notes-list-container');
+        const mainEditorPane = document.getElementById('main-editor-pane');
+        const newNoteBtn = document.getElementById('new-note-btn');
+        let activeNoteId = null;
+        const STATIC_LOGOUT_ICON = "{% static 'notes/img/Image-8.svg' %}";
 
-    const emptyStateHTML = `
+        const emptyStateHTML = `
         <div class="empty-state-editor">
             <div class="empty-state-icon-wrapper">
                 <img src="{% static 'notes/img/Icon-1.svg' %}" alt="Note editor" />
@@ -137,159 +142,159 @@ document.addEventListener('DOMContentLoaded', function() {
             <p>Or create a new one to get started</p>
         </div>`;
 
-    // --- Search and sort handlers (update URL params and reload) ---
-    const searchInput = document.querySelector('.sidebar-search input');
-    const initialQuery = "{{ search_query|escapejs }}";
-    const initialSort = "{{ sort_by }}";
-    const SORT_OPTIONS = [
-        {value: '-created_at', label: 'Newest'},
-        {value: 'created_at', label: 'Oldest'},
-        {value: 'title', label: 'A-Z'},
-        {value: '-title', label: 'Z-A'}
-    ];
+        // --- Search and sort handlers (update URL params and reload) ---
+        const searchInput = document.querySelector('.sidebar-search input');
+        const initialQuery = "{{ search_query|escapejs }}";
+        const initialSort = "{{ sort_by }}";
+        const SORT_OPTIONS = [
+            { value: '-created_at', label: 'Newest' },
+            { value: 'created_at', label: 'Oldest' },
+            { value: 'title', label: 'A-Z' },
+            { value: '-title', label: 'Z-A' }
+        ];
 
-    // Initialize custom sort dropdown
-    const dropdownWrapper = document.querySelector('.sort-select-wrapper');
-    if (dropdownWrapper) {
-        const current = dropdownWrapper.querySelector('#sort-current');
-        const menu = dropdownWrapper.querySelector('#sort-dropdown-menu');
-        const toggleBtn = dropdownWrapper.querySelector('#sort-dropdown-toggle');
+        // Initialize custom sort dropdown
+        const dropdownWrapper = document.querySelector('.sort-select-wrapper');
+        if (dropdownWrapper) {
+            const current = dropdownWrapper.querySelector('#sort-current');
+            const menu = dropdownWrapper.querySelector('#sort-dropdown-menu');
+            const toggleBtn = dropdownWrapper.querySelector('#sort-dropdown-toggle');
 
-        const selectedOpt = SORT_OPTIONS.find(o => o.value === initialSort) || SORT_OPTIONS[0];
-        if (current) current.textContent = selectedOpt.label;
-        try {
-            // Apply initial client-side sort so switching is instant (falls back safely if function missing)
-            sortNotesClient(initialSort);
-        } catch (err) {
-            console.debug('sortNotesClient not available at init:', err);
-        }
-
-        // Cycle sort modes on repeated clicks of the toggle button
-        if (toggleBtn) {
-            // determine current index from initial server-provided sort
-            let currentIndex = SORT_OPTIONS.findIndex(o => o.value === initialSort);
-            if (currentIndex === -1) currentIndex = 0;
-
-            toggleBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-
-                // advance to next sort option
-                currentIndex = (currentIndex + 1) % SORT_OPTIONS.length;
-                const next = SORT_OPTIONS[currentIndex];
-
-                // update visible label immediately
-                if (current) current.textContent = next.label;
-
-                // instant client-side sorting (no reload)
-                sortNotesClient(next.value);
-
-                // update URL without reloading so the state is shareable
-                const params = new URLSearchParams(window.location.search);
-                if (next.value) params.set('sort', next.value);
-                else params.delete('sort');
-                const newUrl = window.location.pathname + (params.toString() ? ('?' + params.toString()) : '');
-                try {
-                    window.history.replaceState({}, '', newUrl);
-                } catch (err) {
-                    console.debug('history.replaceState failed', err);
-                }
-            });
-
-            // Allow keyboard activation (Enter / Space)
-            toggleBtn.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    toggleBtn.click();
-                }
-            });
-        }
-    }
-
-    // populate search input with server-provided query
-    if (searchInput) {
-        searchInput.value = initialQuery || '';
-    }
-
-    function debounce(fn, delay) {
-        let timer;
-        return function(...args) {
-            clearTimeout(timer);
-            timer = setTimeout(() => fn.apply(this, args), delay);
-        };
-    }
-
-    // Client-side sorting for instant feedback (reorders DOM)
-    function sortNotesClient(mode) {
-        const container = document.getElementById('notes-list-container');
-        if (!container) return;
-        const items = Array.from(container.querySelectorAll('.note-item'));
-        const collator = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true });
-
-        items.sort((a, b) => {
-            const aTitle = (a.dataset.noteTitle || '').trim();
-            const bTitle = (b.dataset.noteTitle || '').trim();
-            const aCreated = new Date(a.dataset.noteCreated || 0);
-            const bCreated = new Date(b.dataset.noteCreated || 0);
-
-            if (mode === '-created_at') return bCreated - aCreated;
-            if (mode === 'created_at') return aCreated - bCreated;
-            if (mode === 'title') return collator.compare(aTitle, bTitle);
-            if (mode === '-title') return collator.compare(bTitle, aTitle);
-            return 0;
-        });
-
-        // Reattach nodes in sorted order (fast DOM ops)
-        const frag = document.createDocumentFragment();
-        items.forEach(it => frag.appendChild(it));
-        container.innerHTML = '';
-        container.appendChild(frag);
-    }
-
-    function updateQueryAndReload({ q, sort } = {}) {
-        const params = new URLSearchParams(window.location.search);
-        if (q !== undefined) {
-            if (q && q.trim() !== '') params.set('q', q.trim());
-            else params.delete('q');
-        }
-        if (sort !== undefined) {
-            if (sort) params.set('sort', sort);
-            else params.delete('sort');
-        }
-        const queryString = params.toString();
-        const newUrl = window.location.pathname + (queryString ? ('?' + queryString) : '');
-        console.log('updateQueryAndReload -> newUrl:', newUrl, 'params:', Object.fromEntries(params.entries()));
-        window.location.href = newUrl;
-    }
-
-    if (searchInput) {
-        searchInput.addEventListener('keydown', function(e) {
-            console.log('searchInput keydown', e.key, searchInput.value);
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                console.log('Submitting search via Enter:', searchInput.value);
-                updateQueryAndReload({ q: searchInput.value });
+            const selectedOpt = SORT_OPTIONS.find(o => o.value === initialSort) || SORT_OPTIONS[0];
+            if (current) current.textContent = selectedOpt.label;
+            try {
+                // Apply initial client-side sort so switching is instant (falls back safely if function missing)
+                sortNotesClient(initialSort);
+            } catch (err) {
+                console.debug('sortNotesClient not available at init:', err);
             }
-        });
-        searchInput.addEventListener('input', debounce(function() {
-            console.log('searchInput input (debounced):', searchInput.value);
-            updateQueryAndReload({ q: searchInput.value });
-        }, 500));
-        const searchIcon = document.querySelector('.sidebar-search .search-icon');
-        if (searchIcon) {
-            searchIcon.addEventListener('click', function() {
-                console.log('Search icon clicked, focusing input, value:', searchInput.value);
-                searchInput.focus();
-                updateQueryAndReload({ q: searchInput.value });
-            });
+
+            // Cycle sort modes on repeated clicks of the toggle button
+            if (toggleBtn) {
+                // determine current index from initial server-provided sort
+                let currentIndex = SORT_OPTIONS.findIndex(o => o.value === initialSort);
+                if (currentIndex === -1) currentIndex = 0;
+
+                toggleBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    // advance to next sort option
+                    currentIndex = (currentIndex + 1) % SORT_OPTIONS.length;
+                    const next = SORT_OPTIONS[currentIndex];
+
+                    // update visible label immediately
+                    if (current) current.textContent = next.label;
+
+                    // instant client-side sorting (no reload)
+                    sortNotesClient(next.value);
+
+                    // update URL without reloading so the state is shareable
+                    const params = new URLSearchParams(window.location.search);
+                    if (next.value) params.set('sort', next.value);
+                    else params.delete('sort');
+                    const newUrl = window.location.pathname + (params.toString() ? ('?' + params.toString()) : '');
+                    try {
+                        window.history.replaceState({}, '', newUrl);
+                    } catch (err) {
+                        console.debug('history.replaceState failed', err);
+                    }
+                });
+
+                // Allow keyboard activation (Enter / Space)
+                toggleBtn.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggleBtn.click();
+                    }
+                });
+            }
         }
-    }
 
-    // sort handled via custom dropdown
+        // populate search input with server-provided query
+        if (searchInput) {
+            searchInput.value = initialQuery || '';
+        }
 
-    function getEditorHTML(noteId, title, content, timestamp, hasReceipt) {
-        const isNewNote = !noteId;
-        return `
+        function debounce(fn, delay) {
+            let timer;
+            return function (...args) {
+                clearTimeout(timer);
+                timer = setTimeout(() => fn.apply(this, args), delay);
+            };
+        }
+
+        // Client-side sorting for instant feedback (reorders DOM)
+        function sortNotesClient(mode) {
+            const container = document.getElementById('notes-list-container');
+            if (!container) return;
+            const items = Array.from(container.querySelectorAll('.note-item'));
+            const collator = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true });
+
+            items.sort((a, b) => {
+                const aTitle = (a.dataset.noteTitle || '').trim();
+                const bTitle = (b.dataset.noteTitle || '').trim();
+                const aCreated = new Date(a.dataset.noteCreated || 0);
+                const bCreated = new Date(b.dataset.noteCreated || 0);
+
+                if (mode === '-created_at') return bCreated - aCreated;
+                if (mode === 'created_at') return aCreated - bCreated;
+                if (mode === 'title') return collator.compare(aTitle, bTitle);
+                if (mode === '-title') return collator.compare(bTitle, aTitle);
+                return 0;
+            });
+
+            // Reattach nodes in sorted order (fast DOM ops)
+            const frag = document.createDocumentFragment();
+            items.forEach(it => frag.appendChild(it));
+            container.innerHTML = '';
+            container.appendChild(frag);
+        }
+
+        function updateQueryAndReload({ q, sort } = {}) {
+            const params = new URLSearchParams(window.location.search);
+            if (q !== undefined) {
+                if (q && q.trim() !== '') params.set('q', q.trim());
+                else params.delete('q');
+            }
+            if (sort !== undefined) {
+                if (sort) params.set('sort', sort);
+                else params.delete('sort');
+            }
+            const queryString = params.toString();
+            const newUrl = window.location.pathname + (queryString ? ('?' + queryString) : '');
+            console.log('updateQueryAndReload -> newUrl:', newUrl, 'params:', Object.fromEntries(params.entries()));
+            window.location.href = newUrl;
+        }
+
+        if (searchInput) {
+            searchInput.addEventListener('keydown', function (e) {
+                console.log('searchInput keydown', e.key, searchInput.value);
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    console.log('Submitting search via Enter:', searchInput.value);
+                    updateQueryAndReload({ q: searchInput.value });
+                }
+            });
+            searchInput.addEventListener('input', debounce(function () {
+                console.log('searchInput input (debounced):', searchInput.value);
+                updateQueryAndReload({ q: searchInput.value });
+            }, 500));
+            const searchIcon = document.querySelector('.sidebar-search .search-icon');
+            if (searchIcon) {
+                searchIcon.addEventListener('click', function () {
+                    console.log('Search icon clicked, focusing input, value:', searchInput.value);
+                    searchInput.focus();
+                    updateQueryAndReload({ q: searchInput.value });
+                });
+            }
+        }
+
+        // sort handled via custom dropdown
+
+        function getEditorHTML(noteId, title, content, timestamp, hasReceipt) {
+            const isNewNote = !noteId;
+            return `
             <div class="note-editor-view">
                 <div class="note-editor-container">
                     <div class="note-editor-header">
@@ -317,170 +322,170 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
         `;
-    }
-
-    function renderEditor(noteId, title, content, timestamp, hasReceipt) {
-        mainEditorPane.innerHTML = getEditorHTML(noteId, title, content, timestamp, hasReceipt);
-        activeNoteId = noteId;
-        attachEditorEventListeners();
-    }
-
-    function renderEmptyState() {
-        mainEditorPane.innerHTML = emptyStateHTML;
-        activeNoteId = null;
-    }
-
-    function attachEditorEventListeners() {
-        const saveBtn = document.getElementById('save-note-btn');
-        if (saveBtn) {
-            saveBtn.addEventListener('click', handleSaveNote);
         }
 
-        const deleteBtn = document.getElementById('delete-note-btn');
-        if (deleteBtn) {
-            deleteBtn.addEventListener('click', function() {
-                if (!activeNoteId) return;
-                if (!confirm('Are you sure you want to delete this note?')) return;
+        function renderEditor(noteId, title, content, timestamp, hasReceipt) {
+            mainEditorPane.innerHTML = getEditorHTML(noteId, title, content, timestamp, hasReceipt);
+            activeNoteId = noteId;
+            attachEditorEventListeners();
+        }
 
-                fetch(`/notes/delete/${activeNoteId}/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: `csrfmiddlewaretoken={{ csrf_token }}`
-                })
+        function renderEmptyState() {
+            mainEditorPane.innerHTML = emptyStateHTML;
+            activeNoteId = null;
+        }
+
+        function attachEditorEventListeners() {
+            const saveBtn = document.getElementById('save-note-btn');
+            if (saveBtn) {
+                saveBtn.addEventListener('click', handleSaveNote);
+            }
+
+            const deleteBtn = document.getElementById('delete-note-btn');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', function () {
+                    if (!activeNoteId) return;
+                    if (!confirm('Are you sure you want to delete this note?')) return;
+
+                    fetch(`/notes/delete/${activeNoteId}/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: `csrfmiddlewaretoken={{ csrf_token }}`
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                window.location.reload();
+                            } else {
+                                alert('Delete failed.');
+                            }
+                        })
+                        .catch(() => alert('Delete failed.'));
+                });
+            }
+
+
+
+        }
+
+        function handleSaveNote() {
+            const title = document.getElementById('note-editor-title').value;
+            const content = document.getElementById('note-editor-content').value;
+            const url = activeNoteId ? `/notes/edit/${activeNoteId}/` : '{% url "notes:create_note" %}';
+            const formData = new FormData();
+            formData.append('title', title);
+            formData.append('content', content);
+
+
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            fetch(url, { method: 'POST', body: formData, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
                         window.location.reload();
                     } else {
-                        alert('Delete failed.');
+                        alert('Error saving note.');
+                    }
+                });
+        }
+
+        noteListContainer.addEventListener('click', function (e) {
+            const noteItem = e.target.closest('.note-item');
+            if (noteItem) {
+                document.querySelectorAll('.note-item').forEach(item => item.classList.remove('active'));
+                noteItem.classList.add('active');
+                renderEditor(
+                    noteItem.dataset.noteId,
+                    noteItem.dataset.noteTitle,
+                    noteItem.dataset.noteContent,
+                    noteItem.querySelector('.note-item-footer span:first-child').textContent,
+                    noteItem.dataset.noteHasReceipt === 'true'
+                );
+            }
+        });
+
+        newNoteBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            document.querySelectorAll('.note-item').forEach(item => item.classList.remove('active'));
+            renderEditor(null, 'New Note', '', 'Just now');
+        });
+
+        // Initial render
+        renderEmptyState();
+
+        // Blockchain status polling
+        const statusText = document.getElementById('blockchain-status-text');
+        const glowingDot = document.querySelector('.glowing-dot');
+        function checkBlockchainStatus() {
+            fetch('{% url "notes:api_blockchain_status" %}')
+                .then(response => response.json())
+                .then(data => {
+                    if (statusText) {
+                        statusText.textContent = data.is_connected ? 'Blockchain Online' : 'Blockchain Offline';
+                    }
+                    if (glowingDot) {
+                        glowingDot.style.backgroundColor = data.is_connected ? '#00D9FF' : '#dc3545';
                     }
                 })
-                .catch(() => alert('Delete failed.'));
+                .catch(err => {
+                    console.error('Blockchain status fetch failed', err);
+                });
+        }
+        setInterval(checkBlockchainStatus, 5000);
+        checkBlockchainStatus();
+
+        // --- Logout modal (centered) behavior ---
+        const logoutBtn = document.querySelector('.logout-button');
+        const logoutBackdrop = document.getElementById('logout-backdrop');
+        const cancelLogoutBtn = document.getElementById('cancel-logout-btn');
+
+        function openLogoutModal() {
+            if (!logoutBackdrop) return;
+            logoutBackdrop.classList.add('visible');
+            logoutBackdrop.setAttribute('aria-hidden', 'false');
+            // prevent background scroll
+            document.documentElement.style.overflow = 'hidden';
+            document.body.style.overflow = 'hidden';
+            // focus first action
+            const focusTarget = logoutBackdrop.querySelector('.btn-cancel, .btn-logout-confirm');
+            if (focusTarget) focusTarget.focus();
+        }
+
+        function closeLogoutModal() {
+            if (!logoutBackdrop) return;
+            logoutBackdrop.classList.remove('visible');
+            logoutBackdrop.setAttribute('aria-hidden', 'true');
+            document.documentElement.style.overflow = '';
+            document.body.style.overflow = '';
+            if (logoutBtn) logoutBtn.focus();
+        }
+
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                openLogoutModal();
             });
         }
 
-
-
-    }
-
-    function handleSaveNote() {
-        const title = document.getElementById('note-editor-title').value;
-        const content = document.getElementById('note-editor-content').value;
-        const url = activeNoteId ? `/notes/edit/${activeNoteId}/` : '{% url "notes:create_note" %}';
-        const formData = new FormData();
-        formData.append('title', title);
-        formData.append('content', content);
-
-
-        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-
-        fetch(url, { method: 'POST', body: formData, headers: {'X-Requested-With': 'XMLHttpRequest'} })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    window.location.reload();
-                } else {
-                    alert('Error saving note.');
-                }
+        if (cancelLogoutBtn) {
+            cancelLogoutBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                closeLogoutModal();
             });
-    }
+        }
 
-    noteListContainer.addEventListener('click', function(e) {
-        const noteItem = e.target.closest('.note-item');
-        if (noteItem) {
-            document.querySelectorAll('.note-item').forEach(item => item.classList.remove('active'));
-            noteItem.classList.add('active');
-            renderEditor(
-                noteItem.dataset.noteId,
-                noteItem.dataset.noteTitle,
-                noteItem.dataset.noteContent,
-                noteItem.querySelector('.note-item-footer span:first-child').textContent,
-                noteItem.dataset.noteHasReceipt === 'true'
-            );
+        if (logoutBackdrop) {
+            logoutBackdrop.addEventListener('click', function (e) {
+                if (e.target === logoutBackdrop) closeLogoutModal();
+            });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') closeLogoutModal();
+            });
         }
     });
-
-    newNoteBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        document.querySelectorAll('.note-item').forEach(item => item.classList.remove('active'));
-        renderEditor(null, 'New Note', '', 'Just now');
-    });
-
-    // Initial render
-    renderEmptyState();
-
-    // Blockchain status polling
-    const statusText = document.getElementById('blockchain-status-text');
-    const glowingDot = document.querySelector('.glowing-dot');
-    function checkBlockchainStatus() {
-        fetch('{% url "notes:api_blockchain_status" %}')
-            .then(response => response.json())
-            .then(data => {
-                if (statusText) {
-                    statusText.textContent = data.is_connected ? 'Blockchain Online' : 'Blockchain Offline';
-                }
-                if (glowingDot) {
-                    glowingDot.style.backgroundColor = data.is_connected ? '#00D9FF' : '#dc3545';
-                }
-            })
-            .catch(err => {
-                console.error('Blockchain status fetch failed', err);
-            });
-    }
-    setInterval(checkBlockchainStatus, 5000);
-    checkBlockchainStatus();
-
-    // --- Logout modal (centered) behavior ---
-    const logoutBtn = document.querySelector('.logout-button');
-    const logoutBackdrop = document.getElementById('logout-backdrop');
-    const cancelLogoutBtn = document.getElementById('cancel-logout-btn');
-
-    function openLogoutModal() {
-        if (!logoutBackdrop) return;
-        logoutBackdrop.classList.add('visible');
-        logoutBackdrop.setAttribute('aria-hidden', 'false');
-        // prevent background scroll
-        document.documentElement.style.overflow = 'hidden';
-        document.body.style.overflow = 'hidden';
-        // focus first action
-        const focusTarget = logoutBackdrop.querySelector('.btn-cancel, .btn-logout-confirm');
-        if (focusTarget) focusTarget.focus();
-    }
-
-    function closeLogoutModal() {
-        if (!logoutBackdrop) return;
-        logoutBackdrop.classList.remove('visible');
-        logoutBackdrop.setAttribute('aria-hidden', 'true');
-        document.documentElement.style.overflow = '';
-        document.body.style.overflow = '';
-        if (logoutBtn) logoutBtn.focus();
-    }
-
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            openLogoutModal();
-        });
-    }
-
-    if (cancelLogoutBtn) {
-        cancelLogoutBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            closeLogoutModal();
-        });
-    }
-
-    if (logoutBackdrop) {
-        logoutBackdrop.addEventListener('click', function(e) {
-            if (e.target === logoutBackdrop) closeLogoutModal();
-        });
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') closeLogoutModal();
-        });
-    }
-});
 </script>
 {% endblock %}

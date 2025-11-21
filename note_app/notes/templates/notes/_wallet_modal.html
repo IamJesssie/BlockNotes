@@ -1,0 +1,193 @@
+<div class="modal fade" id="walletModal" tabindex="-1" aria-labelledby="walletModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content wallet-modal">
+      <div class="modal-header border-0">
+        <h5 class="modal-title" id="walletModalLabel">Connect Wallet</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="wallet-connection-status mb-3">
+          <div id="walletStatus" class="status-indicator">
+            <span class="status-text">Detecting wallets...</span>
+          </div>
+        </div>
+        <div id="walletList" class="wallet-list"></div>
+        <div id="networkStatus" class="network-validation mt-3" style="display: none;">
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i>
+            <span id="networkText"></span>
+          </div>
+        </div>
+        <div id="walletInfo" class="wallet-info mt-3" style="display: none;">
+          <div class="card wallet-details">
+            <div class="card-body">
+              <h6 class="card-subtitle mb-2 text-muted">Connected Wallet</h6>
+              <p class="card-text">
+                <strong>Wallet:</strong> <span id="connectedWalletName"></span><br>
+                <strong>Network:</strong> <span id="connectedNetwork"></span><br>
+                <strong>Address:</strong> <span id="connectedAddress"></span>
+              </p>
+              <button id="disconnectWallet" class="btn btn-outline-danger btn-sm">
+                <i class="bi bi-plug-fill"></i> Disconnect
+              </button>
+              <div class="send-form">
+                <div class="mb-2">
+                  <label class="form-label">Recipient Address</label>
+                  <input type="text" id="recipientAddress" class="form-control" placeholder="addr_test..." />
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Amount (lovelace)</label>
+                  <input type="number" id="sendAmount" class="form-control" placeholder="5000000" />
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Blockfrost Project ID (Preview)</label>
+                  <input type="text" id="blockfrostKeyInput" class="form-control" placeholder="previewXXXXXXXX" />
+                  <small class="text-muted">Stored locally for this browser. Do not share publicly.</small>
+                </div>
+                <button id="saveProviderBtn" class="btn btn-outline-light w-100 mb-2">
+                  Save Provider Settings
+                </button>
+                <button id="sendAdaBtn" class="btn btn-send w-100">
+                  <i class="bi bi-send"></i> Send ADA
+                </button>
+                <div id="txLogs" class="mt-3">
+                  <label class="form-label">Transaction Logs</label>
+                  <pre class="tx-log-box" id="txLogBox"></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Test Send ADA Modal -->
+<div class="modal fade" id="testSendModal" tabindex="-1" aria-labelledby="testSendModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content wallet-modal">
+      <div class="modal-header border-0">
+        <h5 class="modal-title" id="testSendModalLabel">Send Test ADA</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Wallet Selection -->
+        <div class="mb-3">
+          <label class="form-label">Select Wallet</label>
+          <div id="testWalletList" class="wallet-list"></div>
+          <div id="testWalletStatus" class="alert alert-info mt-2" style="display:none;">
+            <span id="testWalletStatusText"></span>
+          </div>
+        </div>
+
+        <!-- Recipient Address Input -->
+        <div class="mb-3">
+          <label class="form-label">Recipient Address</label>
+          <input type="text" id="testRecipientAddress" class="form-control test-form-control" placeholder="addr_test1..." value="addr_test1vpxpnr4ygjthz2c2nmn9ysvapmv0nwmgpq4aq6e6g6gm47gm2qnts" />
+          <small class="text-muted">Default: test address (can be changed)</small>
+        </div>
+
+        <!-- Amount Input -->
+        <div class="mb-3">
+          <label class="form-label">Amount (ADA)</label>
+          <input type="number" id="testSendAmount" class="form-control test-form-control" placeholder="2" value="2" step="0.1" min="0.1" />
+          <small class="text-muted">Minimum 0.1 ADA</small>
+        </div>
+
+        <!-- Blockfrost Project ID -->
+        <div class="mb-3">
+          <label class="form-label">Blockfrost Project ID (Preview)</label>
+          <input type="text" id="testBlockfrostKey" class="form-control test-form-control" placeholder="previewXXXXXXXX" />
+          <small class="text-muted">Get one from https://blockfrost.io</small>
+        </div>
+
+        <!-- Transaction Log -->
+        <div id="testTxLog" class="tx-log-box" style="display:none; margin-bottom: 15px;"></div>
+
+        <!-- Action Buttons -->
+        <button id="testSendSubmitBtn" class="btn btn-send w-100">
+          <i class="bi bi-send"></i> Send Test Transaction
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.test-form-control { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.18); color: white; }
+.test-form-control::placeholder { color: rgba(255,255,255,0.6); }
+</style>
+
+<style>
+.wallet-modal {
+  background: rgba(2, 4, 44, 0.7);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(227, 226, 229, 0.12);
+  border-radius: 16px;
+  color: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+}
+.wallet-modal .modal-header {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 16px 16px 0 0;
+}
+.wallet-modal .modal-title {
+  color: white;
+  font-weight: 600;
+}
+.status-indicator {
+  text-align: center;
+  padding: 1rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  margin-bottom: 1rem;
+}
+.status-indicator.detecting {
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+}
+.status-indicator.connected {
+  background: rgba(25, 135, 84, 0.1);
+  border: 1px solid rgba(25, 135, 84, 0.3);
+}
+.status-indicator.error {
+  background: rgba(220, 53, 69, 0.1);
+  border: 1px solid rgba(220, 53, 69, 0.3);
+}
+.wallet-list { display: flex; flex-direction: column; gap: 0.75rem; }
+.wallet-option {
+  display: flex; align-items: center; padding: 1rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px; cursor: pointer; transition: all 0.3s ease;
+}
+.wallet-option:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); transform: translateY(-2px); }
+.wallet-option.disabled { opacity: 0.5; cursor: not-allowed; }
+.wallet-option.disabled:hover { transform: none; }
+.wallet-icon { width: 40px; height: 40px; margin-right: 1rem; border-radius: 8px; }
+.wallet-info { flex: 1; }
+.wallet-name { font-weight: 600; color: white; margin-bottom: 0.25rem; }
+.wallet-description { font-size: 0.875rem; color: rgba(255, 255, 255, 0.7); }
+.wallet-details { background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); color: rgba(255, 255, 255, 0.92); }
+.network-validation .alert { background: rgba(13, 202, 240, 0.1); border: 1px solid rgba(13, 202, 240, 0.3); color: white; }
+.btn-close-white { filter: invert(1) grayscale(100%) brightness(200%); }
+#disconnectWallet { border-color: rgba(220, 53, 69, 0.5); color: #dc3545; }
+#disconnectWallet:hover { background: rgba(220, 53, 69, 0.1); }
+/* Send ADA form */
+.send-form { margin-top: 16px; }
+.send-form .form-control { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.18); color: white; }
+.send-form .form-control::placeholder { color: rgba(255,255,255,0.6); }
+.send-form .btn-send { background: linear-gradient(135deg, #384BFF, #A020F0); border: none; color: white; }
+.btn-send { background: linear-gradient(135deg, #384BFF, #A020F0); border: none; color: white; padding: 10px 20px; border-radius: 8px; font-weight: 600; transition: all 0.3s ease; }
+.btn-send:hover { background: linear-gradient(135deg, #2d3fbf, #8a1ac0); transform: translateY(-2px); color: white; }
+.btn-send:active { transform: translateY(0); }
+.wallet-modal .modal-body { max-height: 70vh; overflow-y: auto; }
+ .tx-log-box { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); color: #d6d6d6; padding: 10px; border-radius: 10px; max-height: 220px; overflow: auto; font-size: 12px; }
+@media (max-width: 576px) {
+  .wallet-modal .modal-dialog { margin: 0.5rem; }
+  .wallet-option { padding: 0.75rem; }
+  .wallet-icon { width: 32px; height: 32px; }
+}
+</style>

@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,12 +11,17 @@
   <link rel="stylesheet" href="{% static 'notes/style.css' %}">
   <link rel="stylesheet" href="{% static 'notes/landing.css' %}">
 </head>
+
 <body class="{% block body_class %}{% endblock %}">
   {% include 'notes/_bg_blobs.html' %}
-  
+
   {% block navbar %}
   {% include 'notes/_header.html' %}
   {% endblock navbar %}
+
+  {% if user.is_authenticated %}
+  {% include 'notes/_wallet_modal.html' %}
+  {% endif %}
 
   <div class="main-content-area">
     {% block content %}
@@ -23,13 +29,52 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/@emurgo/cardano-serialization-lib-browser@11.2.0/cardano_serialization_lib.min.js"></script>
+  <script src="{% static 'notes/js/wallet-integration.js' %}"></script>
+  <script>
+    // Provide Blockfrost key from server environment when available
+    window.BLOCKFROST_KEY = "{{ BLOCKFROST_PROJECT_ID|default:'' }}";
+    try {
+      if (!window.BLOCKFROST_KEY) {
+        const saved = localStorage.getItem('BLOCKFROST_KEY');
+        if (saved) window.BLOCKFROST_KEY = saved;
+      }
+    } catch (_) { }
+  </script>
+  <script type="module">
+    // Load Blaze SDK - Try older stable version 0.1.7 for better Lace compatibility
+    async function loadBlaze() {
+      try {
+        console.log('Loading Blaze SDK 0.1.7 for better stability...');
+        const mod = await import('https://cdn.jsdelivr.net/npm/@blaze-cardano/sdk@0.1.7/+esm');
+        window.Blaze = mod.Blaze;
+        window.Blockfrost = mod.Blockfrost;
+        window.Core = mod.Core;
+        window.WebWallet = mod.WebWallet;
+        console.log('Blaze SDK 0.1.7 loaded successfully');
+      } catch (e) {
+        console.error('Blaze 0.1.7 load failed, trying 0.2.44 fallback...');
+        try {
+          const mod = await import('https://cdn.jsdelivr.net/npm/@blaze-cardano/sdk@0.2.44/+esm');
+          window.Blaze = mod.Blaze;
+          window.Blockfrost = mod.Blockfrost;
+          window.Core = mod.Core;
+          window.WebWallet = mod.WebWallet;
+          console.log('Blaze SDK 0.2.44 fallback loaded');
+        } catch (e2) {
+          console.error('Both Blaze versions failed:', e2);
+        }
+      }
+    }
+    loadBlaze();
+  </script>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      const themeToggle = document.getElementById('theme-toggle');
-      const themeIcon = themeToggle.querySelector('i');
-
-      // Function to set theme
+      var themeToggle = document.getElementById('theme-toggle');
+      var themeIcon = themeToggle ? themeToggle.querySelector('i') : null;
       function setTheme(theme) {
+        if (!themeIcon) return;
         if (theme === 'light') {
           document.body.classList.add('light-mode');
           themeIcon.classList.remove('bi-moon-fill');
@@ -42,22 +87,39 @@
           localStorage.setItem('theme', 'dark');
         }
       }
-
-      // Toggle theme on button click
-      themeToggle.addEventListener('click', () => {
-        if (document.body.classList.contains('light-mode')) {
-          setTheme('dark');
-        } else {
-          setTheme('light');
-        }
-      });
-
-      // Apply saved theme on page load
-      const savedTheme = localStorage.getItem('theme') || 'dark'; // Default to dark
+      if (themeToggle) {
+        themeToggle.addEventListener('click', function () {
+          if (document.body.classList.contains('light-mode')) setTheme('dark');
+          else setTheme('light');
+        });
+      }
+      var savedTheme = localStorage.getItem('theme') || 'dark';
       setTheme(savedTheme);
+      var btn = document.getElementById('walletConnectButton');
+      var modalEl = document.getElementById('walletModal');
+      if (btn && modalEl) {
+        btn.addEventListener('click', function (e) {
+          e.preventDefault();
+          try {
+            if (window.bootstrap && bootstrap.Modal) {
+              var m = new bootstrap.Modal(modalEl);
+              m.show();
+            } else {
+              modalEl.classList.add('show');
+              modalEl.style.display = 'block';
+              modalEl.removeAttribute('aria-hidden');
+            }
+          } catch (err) {
+            modalEl.classList.add('show');
+            modalEl.style.display = 'block';
+            modalEl.removeAttribute('aria-hidden');
+          }
+        });
+      }
     });
   </script>
   {% block scripts %}
   {% endblock %}
 </body>
+
 </html>

@@ -12,6 +12,13 @@
                 <img src="{% static 'notes/img/Icon-9.svg' %}" alt="User" />
                 <span>{{ user.username }}</span>
             </div>
+            <button id="walletConnectButton" class="btn btn-outline-primary wallet-connect-btn" data-bs-toggle="modal" data-bs-target="#walletModal">
+                <i class="bi bi-wallet2"></i> Connect Wallet
+            </button>
+            <!-- Test button hidden for presentation -->
+            <button id="testSendAdaButton" class="btn btn-outline-success" style="margin-left: 10px; cursor: pointer; display: none;">
+                Send Test ADA
+            </button>
             <a href="{% url 'account_logout' %}" class="logout-button">
                 <img src="{% static 'notes/img/Icon-8.svg' %}" alt="Logout" />
                 Logout
