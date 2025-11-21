@@ -41,8 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'allauth',
     'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
+    # 'allauth.socialaccount',
+    # 'allauth.socialaccount.providers.google',
 ]
 
 MIDDLEWARE = [
@@ -149,19 +149,19 @@ LOGIN_URL = '/notes/landing/'
 LOGIN_REDIRECT_URL = '/notes/'
 LOGOUT_REDIRECT_URL = '/'
 
-SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'SCOPE': [
-            'profile',
-            'email',
-        ],
-        'AUTH_PARAMS': {
-            'access_type': 'online',
-        }
-    }
-}
+# SOCIALACCOUNT_PROVIDERS = {
+#     'google': {
+#         'SCOPE': [
+#             'profile',
+#             'email',
+#         ],
+#         'AUTH_PARAMS': {
+#             'access_type': 'online',
+#         }
+#     }
+# }
 
-SOCIALACCOUNT_LOGIN_ON_GET = True
+# SOCIALACCOUNT_LOGIN_ON_GET = True
 
 # Cardano/Blockfrost Configuration
 BLOCKFROST_PROJECT_ID = 'previewzR4AsrnHPxczC2GwiVdyZL8vaiIfMgvZ'
