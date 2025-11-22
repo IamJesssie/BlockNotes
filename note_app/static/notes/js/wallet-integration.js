@@ -340,6 +340,26 @@ class CardanoWalletManager {
             // Convert ADA to lovelace (1 ADA = 1,000,000 lovelace)
             const amount = BigInt(Math.floor(amountAda * 1000000));
             
+            // Pre-flight: Test Blockfrost API connectivity
+            appendLog('HEALTH', 'Testing Blockfrost API...');
+            try {
+                const healthCheck = await fetch('https://cardano-preview.blockfrost.io/api/v0/health', {
+                    method: 'GET',
+                    headers: { 'project_id': blockfrostKey }
+                });
+                const healthData = await healthCheck.json();
+                console.log('Blockfrost health check:', healthCheck.status, healthData);
+                appendLog('HEALTH', `Status: ${healthCheck.status}, Healthy: ${healthData.is_healthy}`);
+                
+                if (!healthCheck.ok || !healthData.is_healthy) {
+                    appendLog('WARNING', 'Blockfrost API may be experiencing issues');
+                    alert(`⚠️ Blockfrost API Warning\n\nStatus: ${healthCheck.status}\nHealthy: ${healthData.is_healthy}\n\nTransaction may fail. The Blockfrost Preview network backend appears to be having intermittent 502 errors.\n\nYou can:\n1. Try again in a few minutes\n2. Check https://blockfrost.io/status\n3. Continue anyway (may fail)`);
+                }
+            } catch (healthErr) {
+                console.error('Blockfrost health check failed:', healthErr);
+                appendLog('WARNING', 'Cannot reach Blockfrost');
+            }
+            
             // Check if Blaze SDK is loaded
             if (!window.Blaze || !window.Blockfrost || !window.WebWallet || !window.Core) {
                 appendLog('ERROR', 'Blaze SDK not loaded');
@@ -553,6 +573,36 @@ class CardanoWalletManager {
                         return;
                     }
                     
+                    // Pre-flight: Test Blockfrost API connectivity
+                    appendLog('Health Check', 'Testing Blockfrost API...');
+                    try {
+                        const healthCheck = await fetch('https://cardano-preview.blockfrost.io/api/v0/health', {
+                            method: 'GET',
+                            headers: { 'project_id': projectId }
+                        });
+                        const healthData = await healthCheck.json();
+                        console.log('Blockfrost health check:', healthCheck.status, healthData);
+                        
+                        if (!healthCheck.ok) {
+                            appendLog('ERROR', `Blockfrost API error: ${healthCheck.status}`);
+                            alert(`Blockfrost API is not responding properly.\n\nStatus: ${healthCheck.status}\nResponse: ${JSON.stringify(healthData)}\n\nCheck your project ID or try later.`);
+                            return;
+                        }
+                        
+                        if (!healthData.is_healthy) {
+                            appendLog('WARNING', 'Blockfrost reports unhealthy status');
+                            const proceed = confirm('⚠️ Blockfrost reports unhealthy status.\n\nThe transaction may fail. Continue anyway?');
+                            if (!proceed) return;
+                        }
+                        
+                        appendLog('Health Check', '✓ Blockfrost API healthy');
+                    } catch (healthErr) {
+                        console.error('Blockfrost health check failed:', healthErr);
+                        appendLog('ERROR', 'Cannot reach Blockfrost API');
+                        const proceed = confirm('⚠️ Cannot reach Blockfrost API for health check.\n\nThis might be a network issue. Continue anyway?');
+                        if (!proceed) return;
+                    }
+                    
                     // Check if Blaze is loaded (exactly as in React reference)
                     if (!window.Blaze || !window.Blockfrost || !window.WebWallet || !window.Core) {
                         alert('Blaze SDK not loaded. Please refresh the page.');
@@ -687,21 +737,53 @@ class CardanoWalletManager {
                                 txHash = await blaze.submitTransaction(signedTx);
                             } catch (sdkErr) {
                                 console.warn('Blaze submit failed, using manual Blockfrost call', sdkErr);
-                                appendLog('Status', 'SDK submit failed, sending raw CBOR to Blockfrost...');
+                                appendLog('Status', 'SDK submit failed, trying raw CBOR bytes...');
                                 submittedVia = 'manual-blockfrost';
+                                
+                                // Validate project ID is for preview network
+                                if (!projectId.toLowerCase().includes('preview')) {
+                                    console.error('Project ID does not appear to be for preview network:', projectId.substring(0, 15) + '...');
+                                    appendLog('ERROR', 'Project ID must be for preview network');
+                                    throw new Error('Project ID must be for Cardano Preview network. Get one from https://blockfrost.io');
+                                }
+                                
+                                console.log('Manual Blockfrost fallback - CBOR hex length:', signedTxHex.length);
+                                console.log('Manual Blockfrost fallback - CBOR prefix:', signedTxHex.substring(0, 32));
+                                console.log('Manual Blockfrost fallback - project_id:', projectId.substring(0, 10) + '...');
+                                
+                                // Try sending as raw CBOR bytes (correct format for application/cbor)
+                                const cborBytes = hexToBytes(signedTxHex);
+                                console.log('Manual Blockfrost fallback - CBOR bytes length:', cborBytes.length);
+                                appendLog('Manual Submit', `CBOR bytes: ${cborBytes.length}`);
+                                
                                 const response = await fetch('https://cardano-preview.blockfrost.io/api/v0/tx/submit', {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/cbor',
                                         'project_id': projectId,
                                     },
-                                    body: hexToBytes(signedTxHex)
+                                    body: cborBytes,
                                 });
+                                
+                                const responseText = await response.text();
+                                console.log('Manual Blockfrost fallback - status:', response.status, response.statusText);
+                                console.log('Manual Blockfrost fallback - response:', responseText.substring(0, 200));
+                                appendLog('Manual Submit', `Status: ${response.status}`);
+                                
                                 if (!response.ok) {
-                                    const errBody = await response.text();
-                                    throw new Error(`Blockfrost submit failed (${response.status}): ${errBody}`);
+                                    console.error('Manual Blockfrost fallback - headers:', Object.fromEntries(response.headers.entries()));
+                                    
+                                    // Check if it's a Blockfrost backend issue (502 in wrapped JSON)
+                                    if (responseText.includes('502 Bad Gateway') || responseText.includes('nginx')) {
+                                        throw new Error(`Blockfrost preview network appears to be having issues (backend 502). Please try again in a few minutes or check https://blockfrost.io/status`);
+                                    }
+                                    
+                                    throw new Error(`Blockfrost submit failed (${response.status}): ${responseText}`);
                                 }
-                                txHash = await response.text();
+                                
+                                // Strip quotes from response if present
+                                txHash = responseText.replace(/^"(.*)"$/, '$1').trim();
+                                console.log('Manual Blockfrost - success! TX hash:', txHash);
                             }
                         }
                         
