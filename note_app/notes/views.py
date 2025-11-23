@@ -48,7 +48,7 @@ def list_notes(request):
     if sort_by not in valid_sort_fields:
         sort_by = "-created_at"
 
-    notes = Note.objects.all()
+    notes = Note.objects.filter(user=request.user)
     if search_query:
         notes = notes.filter(Q(title__icontains=search_query) | Q(content__icontains=search_query))
     notes = notes.order_by(sort_by)
@@ -75,7 +75,7 @@ def create_note_view(request):
         if not title or not content:
             return JsonResponse({'success': False, 'error': 'Title and content are required'})
 
-        note = Note.objects.create(title=title, content=content)
+        note = Note.objects.create(user=request.user, title=title, content=content)
         logger.info(f"Note created with ID: {note.id}")
 
         try:
@@ -156,7 +156,7 @@ def create_note_view(request):
 def edit_note(request, note_id):
     if not request.user.is_authenticated:
         return JsonResponse({'success': False, 'error': 'Authentication required'}, status=401)
-    note = get_object_or_404(Note, id=note_id)
+    note = get_object_or_404(Note, id=note_id, user=request.user)
     if request.method == 'POST':
         note.title = request.POST.get('title')
         note.content = request.POST.get('content')
@@ -169,7 +169,7 @@ def edit_note(request, note_id):
 def delete_note(request, note_id):
     if not request.user.is_authenticated:
         return JsonResponse({'success': False, 'error': 'Authentication required'}, status=401)
-    note = get_object_or_404(Note, id=note_id)
+    note = get_object_or_404(Note, id=note_id, user=request.user)
     if request.method == 'POST':
         note.delete()
         return JsonResponse({'success': True})
@@ -178,7 +178,7 @@ def delete_note(request, note_id):
 # VERIFY RECEIPT (JSON API)
 @require_http_methods(["GET"])
 def verify_receipt(request, note_id):
-    note = get_object_or_404(Note, id=note_id)
+    note = get_object_or_404(Note, id=note_id, user=request.user)
     receipt = getattr(note, 'blockchain_receipt', None)
 
     if not receipt:
@@ -216,7 +216,7 @@ def verify_receipt(request, note_id):
 # BLOCKCHAIN PROOF PAGE
 @login_required
 def blockchain_proof(request, note_id):
-    note = get_object_or_404(Note, id=note_id)
+    note = get_object_or_404(Note, id=note_id, user=request.user)
     receipt = getattr(note, 'blockchain_receipt', None)
 
     if not receipt:
