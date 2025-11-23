@@ -1213,470 +1213,108 @@ body {
     right: 0;
     bottom: 0;
     z-index: 100;
+    border-radius: 16px;
+    padding: 20px;
+    min-height: 180px;
+    animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
 
-    /* Tablet (768px - 1024px) */
-    @media (max-width: 1024px) {
-        .notes-grid {
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 16px;
-        }
+@keyframes skeleton-pulse {
 
-        .dashboard-toolbar {
-            gap: 12px;
-        }
-
-        .toolbar-search {
-            max-width: 100%;
-        }
+    0%,
+    100% {
+        opacity: 0.4;
     }
 
-    /* Mobile & Android (max-width: 768px) */
-    @media (max-width: 768px) {
-        .notes-app-container {
-            padding: 16px 12px;
-            height: calc(100vh - 140px);
-        }
+    50% {
+        opacity: 0.6;
+    }
+}
 
-        .notes-dashboard {
-            gap: 16px;
-            padding: 0;
-        }
+.skeleton-line {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    height: 12px;
+    margin-bottom: 8px;
+}
 
-        .dashboard-toolbar {
-            flex-direction: column;
-            align-items: stretch;
-            gap: 12px;
-            padding: 0;
-        }
+/* ============================================
+   RESPONSIVE DESIGN - MOBILE & ANDROID
+   ============================================ */
 
-        .toolbar-left {
-            flex-direction: column;
-            align-items: stretch;
-            width: 100%;
-            min-width: 100%;
-        }
-
-        .toolbar-right {
-            width: 100%;
-            justify-content: space-between;
-        }
-
-        .toolbar-search {
-            max-width: 100%;
-            width: 100%;
-        }
-
-        .toolbar-search input {
-            width: 100%;
-        }
-
-        /* 2-column grid on tablet portrait */
-        .notes-grid {
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 12px;
-            padding: 2px;
-        }
-
-        .note-card {
-            padding: 16px;
-            min-height: 160px;
-        }
-
-        .card-title {
-            font-size: 16px;
-        }
-
-        .card-preview {
-            font-size: 13px;
-            -webkit-line-clamp: 2;
-        }
-
-        /* Fullscreen editor adjustments */
-        .note-editor-pane.fullscreen {
-            padding: 16px;
-        }
-
-        .note-editor-view .note-editor-container {
-            padding: 16px;
-        }
+/* Tablet (768px - 1024px) */
+@media (max-width: 1024px) {
+    .notes-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 16px;
     }
 
-    /* Small Mobile & Android (max-width: 480px) */
-    @media (max-width: 480px) {
-        .new-header {
-            margin: 16px 12px 8px;
-            padding: 0 16px;
-            height: 56px;
-        }
-
-        .notes-app-container {
-            padding: 12px 8px;
-            height: calc(100vh - 120px);
-        }
-
-        .notes-dashboard {
-            gap: 12px;
-        }
-
-        .dashboard-toolbar {
-            gap: 10px;
-        }
-
-        /* Single column grid on mobile */
-        .notes-grid {
-            grid-template-columns: 1fr;
-            gap: 12px;
-        }
-
-        .note-card {
-            padding: 14px;
-            min-height: 140px;
-        }
-
-        .note-card:hover {
-            /* Reduce hover effect on touch devices */
-            transform: translateY(-2px);
-        }
-
-        .card-header {
-            gap: 8px;
-        }
-
-        .card-title {
-            font-size: 15px;
-        }
-
-        .card-preview {
-            font-size: 12px;
-        }
-
-        .status-badge {
-            font-size: 10px;
-            padding: 3px 6px;
-        }
-
-        .tag-pill {
-            font-size: 11px;
-            padding: 3px 8px;
-        }
-
-        .card-date {
-            font-size: 11px;
-        }
-
-        /* Toolbar adjustments */
-        .btn-new-note {
-            width: 100%;
-            justify-content: center;
-            padding: 10px 16px;
-        }
-
-        .sort-dropdown-toggle {
-            font-size: 12px;
-            padding: 6px 10px;
-        }
-
-        .blockchain-status-widget {
-            font-size: 11px;
-            padding: 6px 10px;
-        }
-
-        /* Editor fullscreen on mobile */
-        .note-editor-pane.fullscreen {
-            padding: 12px;
-        }
-
-        .note-title-input {
-            font-size: 18px !important;
-            padding: 12px !important;
-        }
-
-        .note-content-textarea {
-            font-size: 14px !important;
-            padding: 12px !important;
-        }
+    .dashboard-toolbar {
+        gap: 12px;
     }
 
-    /* Android-specific optimizations */
-    @media (max-width: 480px) and (orientation: portrait) {
+    .toolbar-search {
+        max-width: 100%;
+    }
+}
 
-        /* Optimize for Android portrait mode */
-        .notes-grid {
-            /* Account for Android nav bar */
-            padding-bottom: 80px;
-        }
-
-        /* Larger touch targets for Android */
-        .note-card {
-            min-height: 150px;
-        }
-
-        .btn-new-note,
-        .btn-save,
-        .btn-delete,
-        .btn-back {
-            min-height: 44px;
-            /* Android recommended touch target */
-            padding: 10px 16px;
-        }
+/* Mobile & Android (max-width: 768px) */
+@media (max-width: 768px) {
+    .notes-app-container {
+        padding: 16px 12px;
+        height: calc(100vh - 140px);
     }
 
-    /* Landscape mode for mobile/Android */
-    @media (max-width: 768px) and (orientation: landscape) {
-        .notes-grid {
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 10px;
-        }
-
-        .note-card {
-            padding: 12px;
-            min-height: 120px;
-        }
-
-        .card-preview {
-            -webkit-line-clamp: 2;
-        }
+    .notes-dashboard {
+        gap: 16px;
+        padding: 0;
     }
 
-    /* Accessibility: Respect reduced motion */
-    @media (prefers-reduced-motion: reduce) {
-
-        .note-card,
-        .btn-back,
-        .tag-pill,
-        .note-editor-pane.fullscreen {
-            transition: none !important;
-            animation: none !important;
-        }
-
-        .note-card:hover {
-            transform: none;
-        }
+    .dashboard-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding: 0;
     }
 
-    /* Back Button */
-    .btn-back {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        color: var(--text-primary);
-        padding: 8px 16px;
-        border-radius: 10px;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 14px;
-        transition: all 0.2s ease;
+    .toolbar-left {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        min-width: 100%;
     }
 
-    .btn-back:hover {
-        background: rgba(255, 255, 255, 0.08);
-        transform: translateX(-2px);
+    .toolbar-right {
+        width: 100%;
+        justify-content: space-between;
     }
 
-    /* Editor Top Bar */
-    .editor-top-bar {
-        display: flex;
+    .toolbar-search {
+        max-width: 100%;
+        width: 100%;
     }
 
-    /* Editor Actions - No Extra Space */
-    .note-editor-view .editor-actions {
-        .card-preview {
-            font-size: 13px;
-            -webkit-line-clamp: 2;
-        }
-
-        /* Fullscreen editor adjustments */
-        .note-editor-pane.fullscreen {
-            padding: 16px;
-        }
-
-        .note-editor-view .note-editor-container {
-            padding: 16px;
-        }
+    .toolbar-search input {
+        width: 100%;
     }
 
-    /* Small Mobile & Android (max-width: 480px) */
-    @media (max-width: 480px) {
-        .new-header {
-            margin: 16px 12px 8px;
-            padding: 0 16px;
-            height: 56px;
-        }
-
-        .notes-app-container {
-            padding: 12px 8px;
-            height: calc(100vh - 120px);
-        }
-
-        .notes-dashboard {
-            gap: 12px;
-        }
-
-        .dashboard-toolbar {
-            gap: 10px;
-        }
-
-        /* Single column grid on mobile */
-        .notes-grid {
-            grid-template-columns: 1fr;
-            gap: 12px;
-        }
-
-        .note-card {
-            padding: 14px;
-            min-height: 140px;
-        }
-
-        .note-card:hover {
-            /* Reduce hover effect on touch devices */
-            transform: translateY(-2px);
-        }
-
-        .card-header {
-            gap: 8px;
-        }
-
-        .card-title {
-            font-size: 15px;
-        }
-
-        .card-preview {
-            font-size: 12px;
-        }
-
-        .status-badge {
-            font-size: 10px;
-            padding: 3px 6px;
-        }
-
-        .tag-pill {
-            font-size: 11px;
-            padding: 3px 8px;
-        }
-
-        .card-date {
-            font-size: 11px;
-        }
-
-        /* Toolbar adjustments */
-        .btn-new-note {
-            width: 100%;
-            justify-content: center;
-            padding: 10px 16px;
-        }
-
-        .sort-dropdown-toggle {
-            font-size: 12px;
-            padding: 6px 10px;
-        }
-
-        .blockchain-status-widget {
-            font-size: 11px;
-            padding: 6px 10px;
-        }
-
-        /* Editor fullscreen on mobile */
-        .note-editor-pane.fullscreen {
-            padding: 12px;
-        }
-
-        .note-title-input {
-            font-size: 18px !important;
-            padding: 12px !important;
-        }
-
-        .note-content-textarea {
-            font-size: 14px !important;
-            padding: 12px !important;
-        }
+    /* 2-column grid on tablet portrait */
+    .notes-grid {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 12px;
+        padding: 2px;
     }
 
-    /* Android-specific optimizations */
-    @media (max-width: 480px) and (orientation: portrait) {
-
-        /* Optimize for Android portrait mode */
-        .notes-grid {
-            /* Account for Android nav bar */
-            padding-bottom: 80px;
-        }
-
-        /* Larger touch targets for Android */
-        .note-card {
-            min-height: 150px;
-        }
-
-        .btn-new-note,
-        .btn-save,
-        .btn-delete,
-        .btn-back {
-            min-height: 44px;
-            /* Android recommended touch target */
-            padding: 10px 16px;
-        }
+    .note-card {
+        padding: 16px;
+        min-height: 160px;
     }
 
-    /* Landscape mode for mobile/Android */
-    @media (max-width: 768px) and (orientation: landscape) {
-        .notes-grid {
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 10px;
-        }
-
-        .note-card {
-            padding: 12px;
-            min-height: 120px;
-        }
-
-        .card-preview {
-            -webkit-line-clamp: 2;
-        }
+    .card-title {
+        font-size: 16px;
     }
 
-    /* Accessibility: Respect reduced motion */
-    @media (prefers-reduced-motion: reduce) {
-
-        .note-card,
-        .btn-back,
-        .tag-pill,
-        .note-editor-pane.fullscreen {
-            transition: none !important;
-            animation: none !important;
-        }
-
-        .note-card:hover {
-            transform: none;
-        }
-    }
-
-    /* Back Button */
-    .btn-back {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        color: var(--text-primary);
-        padding: 8px 16px;
-        border-radius: 10px;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 14px;
-        transition: all 0.2s ease;
-    }
-
-    .btn-back:hover {
-        background: rgba(255, 255, 255, 0.08);
-        transform: translateX(-2px);
-    }
-
-    /* Editor Top Bar */
-    .editor-top-bar {
-        display: flex;
-    }
-
-    /* Editor Actions - No Extra Space */
-    .note-editor-view .editor-actions {
-        margin-top: 16px;
+    .card-preview {
         font-size: 13px;
         -webkit-line-clamp: 2;
     }
@@ -1689,6 +1327,396 @@ body {
     .note-editor-view .note-editor-container {
         padding: 16px;
     }
+}
+
+/* Small Mobile & Android (max-width: 480px) */
+@media (max-width: 480px) {
+    .new-header {
+        margin: 16px 12px 8px;
+        padding: 0 16px;
+        height: 56px;
+    }
+
+    .notes-app-container {
+        padding: 12px 8px;
+        height: calc(100vh - 120px);
+    }
+
+    .notes-dashboard {
+        gap: 12px;
+    }
+
+    .dashboard-toolbar {
+        gap: 10px;
+    }
+
+    /* Single column grid on mobile */
+    .notes-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .note-card {
+        padding: 14px;
+        min-height: 140px;
+    }
+
+    .note-card:hover {
+        /* Reduce hover effect on touch devices */
+        transform: translateY(-2px);
+    }
+
+    .card-header {
+        gap: 8px;
+    }
+
+    .card-title {
+        font-size: 15px;
+    }
+
+    .card-preview {
+        font-size: 12px;
+    }
+
+    .status-badge {
+        font-size: 10px;
+        padding: 3px 6px;
+    }
+
+    .tag-pill {
+        font-size: 11px;
+        padding: 3px 8px;
+    }
+
+    .card-date {
+        font-size: 11px;
+    }
+
+    /* Toolbar adjustments */
+    .btn-new-note {
+        width: 100%;
+        justify-content: center;
+        padding: 10px 16px;
+    }
+
+    .sort-dropdown-toggle {
+        font-size: 12px;
+        padding: 6px 10px;
+    }
+
+    .blockchain-status-widget {
+        font-size: 11px;
+        padding: 6px 10px;
+    }
+
+    /* Editor fullscreen on mobile */
+    .note-editor-pane.fullscreen {
+        padding: 12px;
+    }
+
+    .note-title-input {
+        font-size: 18px !important;
+        padding: 12px !important;
+    }
+
+    .note-content-textarea {
+        font-size: 14px !important;
+        padding: 12px !important;
+    }
+}
+
+/* Android-specific optimizations */
+@media (max-width: 480px) and (orientation: portrait) {
+
+    /* Optimize for Android portrait mode */
+    .notes-grid {
+        /* Account for Android nav bar */
+        padding-bottom: 80px;
+    }
+
+    /* Larger touch targets for Android */
+    .note-card {
+        min-height: 150px;
+    }
+
+    .btn-new-note,
+    .btn-save,
+    .btn-delete,
+    .btn-back {
+        min-height: 44px;
+        /* Android recommended touch target */
+        padding: 10px 16px;
+    }
+}
+
+/* Landscape mode for mobile/Android */
+@media (max-width: 768px) and (orientation: landscape) {
+    .notes-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 10px;
+    }
+
+    .note-card {
+        padding: 12px;
+        min-height: 120px;
+    }
+
+    .card-preview {
+        -webkit-line-clamp: 2;
+    }
+}
+
+/* Accessibility: Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+
+    .note-card,
+    .btn-back,
+    .tag-pill,
+    .note-editor-pane.fullscreen {
+        transition: none !important;
+        animation: none !important;
+    }
+
+    .note-card:hover {
+        transform: none;
+    }
+}
+
+/* Back Button */
+.btn-back {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    padding: 8px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.btn-back:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateX(-2px);
+}
+
+/* Editor Top Bar */
+.editor-top-bar {
+    display: flex;
+}
+
+/* Editor Actions - No Extra Space */
+.note-editor-view .editor-actions {
+    .card-preview {
+        font-size: 13px;
+        -webkit-line-clamp: 2;
+    }
+
+    /* Fullscreen editor adjustments */
+    .note-editor-pane.fullscreen {
+        padding: 16px;
+    }
+
+    .note-editor-view .note-editor-container {
+        padding: 16px;
+    }
+}
+
+/* Small Mobile & Android (max-width: 480px) */
+@media (max-width: 480px) {
+    .new-header {
+        margin: 16px 12px 8px;
+        padding: 0 16px;
+        height: 56px;
+    }
+
+    .notes-app-container {
+        padding: 12px 8px;
+        height: calc(100vh - 120px);
+    }
+
+    .notes-dashboard {
+        gap: 12px;
+    }
+
+    .dashboard-toolbar {
+        gap: 10px;
+    }
+
+    /* Single column grid on mobile */
+    .notes-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .note-card {
+        padding: 14px;
+        min-height: 140px;
+    }
+
+    .note-card:hover {
+        /* Reduce hover effect on touch devices */
+        transform: translateY(-2px);
+    }
+
+    .card-header {
+        gap: 8px;
+    }
+
+    .card-title {
+        font-size: 15px;
+    }
+
+    .card-preview {
+        font-size: 12px;
+    }
+
+    .status-badge {
+        font-size: 10px;
+        padding: 3px 6px;
+    }
+
+    .tag-pill {
+        font-size: 11px;
+        padding: 3px 8px;
+    }
+
+    .card-date {
+        font-size: 11px;
+    }
+
+    /* Toolbar adjustments */
+    .btn-new-note {
+        width: 100%;
+        justify-content: center;
+        padding: 10px 16px;
+    }
+
+    .sort-dropdown-toggle {
+        font-size: 12px;
+        padding: 6px 10px;
+    }
+
+    .blockchain-status-widget {
+        font-size: 11px;
+        padding: 6px 10px;
+    }
+
+    /* Editor fullscreen on mobile */
+    .note-editor-pane.fullscreen {
+        padding: 12px;
+    }
+
+    .note-title-input {
+        font-size: 18px !important;
+        padding: 12px !important;
+    }
+
+    .note-content-textarea {
+        font-size: 14px !important;
+        padding: 12px !important;
+    }
+}
+
+/* Android-specific optimizations */
+@media (max-width: 480px) and (orientation: portrait) {
+
+    /* Optimize for Android portrait mode */
+    .notes-grid {
+        /* Account for Android nav bar */
+        padding-bottom: 80px;
+    }
+
+    /* Larger touch targets for Android */
+    .note-card {
+        min-height: 150px;
+    }
+
+    .btn-new-note,
+    .btn-save,
+    .btn-delete,
+    .btn-back {
+        min-height: 44px;
+        /* Android recommended touch target */
+        padding: 10px 16px;
+    }
+}
+
+/* Landscape mode for mobile/Android */
+@media (max-width: 768px) and (orientation: landscape) {
+    .notes-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 10px;
+    }
+
+    .note-card {
+        padding: 12px;
+        min-height: 120px;
+    }
+
+    .card-preview {
+        -webkit-line-clamp: 2;
+    }
+}
+
+/* Accessibility: Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+
+    .note-card,
+    .btn-back,
+    .tag-pill,
+    .note-editor-pane.fullscreen {
+        transition: none !important;
+        animation: none !important;
+    }
+
+    .note-card:hover {
+        transform: none;
+    }
+}
+
+/* Back Button */
+.btn-back {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    padding: 8px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.btn-back:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateX(-2px);
+}
+
+/* Editor Top Bar */
+.editor-top-bar {
+    display: flex;
+}
+
+/* Editor Actions - No Extra Space */
+.note-editor-view .editor-actions {
+    margin-top: 16px;
+    font-size: 13px;
+    -webkit-line-clamp: 2;
+}
+
+/* Fullscreen editor adjustments */
+.note-editor-pane.fullscreen {
+    padding: 16px;
+}
+
+.note-editor-view .note-editor-container {
+    padding: 16px;
+}
 }
 
 /* Small Mobile & Android (max-width: 480px) */
