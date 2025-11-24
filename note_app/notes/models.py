@@ -4,6 +4,7 @@ class Note(models.Model):
     user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='notes')
     title = models.CharField(max_length=255)
     content = models.TextField()
+    tags = models.CharField(max_length=255, blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
