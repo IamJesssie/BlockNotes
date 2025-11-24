@@ -84,13 +84,6 @@
                     <button class="action-btn restore-btn" data-note-id="{{ note.id }}" title="Restore from trash">
                         ↩️
                     </button>
-                    {% elif current_view == 'archive' %}
-                    <button class="action-btn unarchive-btn" data-note-id="{{ note.id }}" title="Unarchive">
-                        📤
-                    </button>
-                    <button class="action-btn trash-btn" data-note-id="{{ note.id }}" title="Move to trash">
-                        🗑️
-                    </button>
                     {% else %}
                     <button class="action-btn pin-btn {% if note.is_pinned %}pinned{% endif %}"
                         data-note-id="{{ note.id }}" title="{% if note.is_pinned %}Unpin{% else %}Pin{% endif %}">
@@ -439,9 +432,14 @@
                 });
         }
 
-        // Card click handler
+        // Card click handler - prevent opening editor when clicking action buttons
         if (noteGridContainer) {
             noteGridContainer.addEventListener('click', function (e) {
+                // Don't open editor if clicking on action buttons or color picker
+                if (e.target.closest('.card-actions') || e.target.closest('.color-picker-menu')) {
+                    return;
+                }
+
                 const noteCard = e.target.closest('.note-card');
                 if (noteCard) {
                     document.querySelectorAll('.note-card').forEach(card => card.classList.remove('active'));
@@ -474,6 +472,171 @@
                     e.preventDefault();
                     closeEditor();
                 }
+            }
+        });
+
+        // ==================== QUICK WINS FEATURES ====================
+
+        // PIN/UNPIN Handler
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('.pin-btn')) {
+                e.stopPropagation();
+                const btn = e.target.closest('.pin-btn');
+                const noteId = btn.dataset.noteId;
+
+                fetch(`/notes/pin/${noteId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `csrfmiddlewaretoken={{ csrf_token }}`
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.reload();
+                        }
+                    })
+                    .catch(err => console.error('Pin failed:', err));
+            }
+        });
+
+        // ARCHIVE Handler
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('.archive-btn')) {
+                e.stopPropagation();
+                const btn = e.target.closest('.archive-btn');
+                const noteId = btn.dataset.noteId;
+
+                fetch(`/notes/archive/${noteId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `csrfmiddlewaretoken={{ csrf_token }}`
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.reload();
+                        }
+                    })
+                    .catch(err => console.error('Archive failed:', err));
+            }
+        });
+
+        // TRASH Handler
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('.trash-btn')) {
+                e.stopPropagation();
+                const btn = e.target.closest('.trash-btn');
+                const noteId = btn.dataset.noteId;
+
+                if (!confirm('Move this note to trash?')) return;
+
+                fetch(`/notes/trash/${noteId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `csrfmiddlewaretoken={{ csrf_token }}`
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.reload();
+                        }
+                    })
+                    .catch(err => console.error('Trash failed:', err));
+            }
+        });
+
+        // RESTORE Handler
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('.restore-btn')) {
+                e.stopPropagation();
+                const btn = e.target.closest('.restore-btn');
+                const noteId = btn.dataset.noteId;
+
+                fetch(`/notes/restore/${noteId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `csrfmiddlewaretoken={{ csrf_token }}`
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.reload();
+                        }
+                    })
+                    .catch(err => console.error('Restore failed:', err));
+            }
+        });
+
+        // COLOR PICKER Toggle
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('.color-btn')) {
+                e.stopPropagation();
+                const btn = e.target.closest('.color-btn');
+                const wrapper = btn.closest('.color-picker-wrapper');
+                const menu = wrapper.querySelector('.color-picker-menu');
+
+                // Close all other color pickers
+                document.querySelectorAll('.color-picker-menu').forEach(m => {
+                    if (m !== menu) m.classList.remove('show');
+                });
+
+                menu.classList.toggle('show');
+            }
+        });
+
+        // COLOR SELECTION Handler
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('.color-option')) {
+                e.stopPropagation();
+                const option = e.target.closest('.color-option');
+                const color = option.dataset.color;
+                const menu = option.closest('.color-picker-menu');
+                const noteId = menu.dataset.noteId;
+
+                const formData = new FormData();
+                formData.append('color', color);
+                formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+                fetch(`/notes/color/${noteId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Update card color class
+                            const card = document.querySelector(`[data-note-id="${noteId}"]`);
+                            if (card) {
+                                card.className = card.className.replace(/color-\w+/, `color-${color}`);
+                            }
+                            menu.classList.remove('show');
+                        }
+                    })
+                    .catch(err => console.error('Color update failed:', err));
+            }
+        });
+
+        // Close color picker when clicking outside
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.color-picker-wrapper')) {
+                document.querySelectorAll('.color-picker-menu').forEach(menu => {
+                    menu.classList.remove('show');
+                });
             }
         });
 
