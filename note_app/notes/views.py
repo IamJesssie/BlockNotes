@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from django.utils import timezone
 from .models import Note, BlockchainReceipt
 from web3 import Web3
 import hashlib
@@ -43,12 +44,22 @@ def landing_page(request):
 def list_notes(request):
     sort_by = request.GET.get("sort", "-created_at")  
     search_query = request.GET.get("q", "")
+    view = request.GET.get("view", "all")  # all, trash, archive
 
     valid_sort_fields = ["created_at", "-created_at", "title", "-title"]
     if sort_by not in valid_sort_fields:
         sort_by = "-created_at"
 
+    # Filter based on view
     notes = Note.objects.filter(user=request.user)
+    
+    if view == "trash":
+        notes = notes.filter(is_deleted=True)
+    elif view == "archive":
+        notes = notes.filter(is_archived=True, is_deleted=False)
+    else:  # view == "all"
+        notes = notes.filter(is_deleted=False, is_archived=False)
+    
     if search_query:
         notes = notes.filter(Q(title__icontains=search_query) | Q(content__icontains=search_query))
     notes = notes.order_by(sort_by)
@@ -59,7 +70,8 @@ def list_notes(request):
         "notes": notes,
         "blockchain_status": blockchain_status,
         "search_query": search_query,
-        "sort_by": sort_by
+        "sort_by": sort_by,
+        "current_view": view,
     })
 
 
@@ -272,3 +284,114 @@ def blockchain_proof(request, note_id):
 def api_blockchain_status(request):
     status = get_blockchain_status()
     return JsonResponse({'is_connected': status})
+
+# QUICK WINS FEATURES
+
+# PIN/UNPIN Note
+@csrf_exempt
+@require_http_methods(["POST"])
+def toggle_pin(request, note_id):
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'Authentication required'}, status=401)
+    
+    try:
+        note = get_object_or_404(Note, id=note_id, user=request.user, is_deleted=False)
+        note.is_pinned = not note.is_pinned
+        note.pinned_at = timezone.now() if note.is_pinned else None
+        note.save()
+        
+        return JsonResponse({
+            'success': True,
+            'is_pinned': note.is_pinned,
+            'message': 'Note pinned' if note.is_pinned else 'Note unpinned'
+        })
+    except Exception as e:
+        logger.error(f"Error toggling pin for note {note_id}: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)})
+
+# ARCHIVE/UNARCHIVE Note  
+@csrf_exempt
+@require_http_methods(["POST"])
+def toggle_archive(request, note_id):
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'Authentication required'}, status=401)
+    
+    try:
+        note = get_object_or_404(Note, id=note_id, user=request.user, is_deleted=False)
+        note.is_archived = not note.is_archived
+        note.archived_at = timezone.now() if note.is_archived else None
+        note.save()
+        
+        return JsonResponse({
+            'success': True,
+            'is_archived': note.is_archived,
+            'message': 'Note archived' if note.is_archived else 'Note unarchived'
+        })
+    except Exception as e:
+        logger.error(f"Error toggling archive for note {note_id}: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)})
+
+# TRASH Note (Soft Delete)
+@csrf_exempt
+@require_http_methods(["POST"])
+def trash_note(request, note_id):
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'Authentication required'}, status=401)
+    
+    try:
+        note = get_object_or_404(Note, id=note_id, user=request.user)
+        note.is_deleted = True
+        note.deleted_at = timezone.now()
+        note.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Note moved to trash'
+        })
+    except Exception as e:
+        logger.error(f"Error trashing note {note_id}: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)})
+
+# RESTORE Note from Trash
+@csrf_exempt
+@require_http_methods(["POST"])
+def restore_note(request, note_id):
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'Authentication required'}, status=401)
+    
+    try:
+        note = get_object_or_404(Note, id=note_id, user=request.user, is_deleted=True)
+        note.is_deleted = False
+        note.deleted_at = None
+        note.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Note restored'
+        })
+    except Exception as e:
+        logger.error(f"Error restoring note {note_id}: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)})
+
+# UPDATE Color
+@csrf_exempt
+@require_http_methods(["POST"])
+def update_color(request, note_id):
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'Authentication required'}, status=401)
+    
+    try:
+        color = request.POST.get('color', 'default')
+        note = get_object_or_404(Note, id=note_id, user=request.user)
+        note.color = color
+        note.save()
+        
+        return JsonResponse({
+            'success': True,
+            'color': note.color,
+            'message': 'Color updated'
+        })
+    except Exception as e:
+        logger.error(f"Error updating color for note {note_id}: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)})
+

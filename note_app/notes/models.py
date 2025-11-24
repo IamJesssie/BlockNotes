@@ -7,9 +7,29 @@ class Note(models.Model):
     tags = models.CharField(max_length=255, blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    # Quick Wins Features
+    # Pin Notes
+    is_pinned = models.BooleanField(default=False)
+    pinned_at = models.DateTimeField(null=True, blank=True)
+    
+    # Archive
+    is_archived = models.BooleanField(default=False)
+    archived_at = models.DateTimeField(null=True, blank=True)
+    
+    # Trash (Soft Delete)
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    
+    # Color Coding
+    color = models.CharField(max_length=20, default='default', blank=True)
+    # Choices: default, red, orange, yellow, green, blue, purple, pink
 
     def __str__(self):
         return self.title
+    
+    class Meta:
+        ordering = ['-is_pinned', '-updated_at']  # Pinned notes first, then by date
 
 
 class BlockchainReceipt(models.Model):
