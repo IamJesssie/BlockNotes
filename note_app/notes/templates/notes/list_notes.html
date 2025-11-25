@@ -101,14 +101,18 @@
                 </div>
             </div>
             {% endfor %}
-            {% else %}
+            {% endif %}
+        </div>
+
+        {% if not notes %}
+        <div class="empty-state-container">
             <div class="empty-state-grid">
                 <div class="empty-state-icon-wrapper"><span style="font-size: 40px;">📝</span></div>
                 <h3>No notes yet</h3>
                 <p>Create your first blockchain-secured note</p>
             </div>
-            {% endif %}
         </div>
+        {% endif %}
     </div>
     <main class="note-editor-pane" id="main-editor-pane" style="display: none;"></main>
 </div>
@@ -151,12 +155,12 @@
         function editorHTML(id, title, content, time, hasReceipt) {
             const isNew = !id;
             return `<div class="note-editor-view"><div class="note-editor-container">
-            <div class="editor-top-bar">${!isNew && hasReceipt ? '<a href="/notes/proof/' + id + '/" class="on-chain-pill"><img src="' + ONCHAIN_ICON + '" alt=""/>On Blockchain</a>' : ''}</div>
-            <div class="note-editor-header"><input type="text" id="note-editor-title" class="note-title-input" value="${esc(title || '')}" placeholder="Your note title..."/></div>
-            <div class="note-editor-toolbar"><div class="note-editor-meta"><span class="last-modified">Last modified: ${time}</span></div></div>
-            <div class="note-editor-body"><textarea id="note-editor-content" class="note-content-textarea" placeholder="Start typing...">${esc(content || '')}</textarea></div>
-            <div class="editor-actions"><button id="save-note-btn" class="btn-save">Save Note</button>${!isNew ? '<button id="delete-note-btn" class="btn-delete">Delete</button>' : '<button id="cancel-note-btn" class="btn-cancel">Cancel</button>'}</div>
-        </div></div>`;
+                <div class="editor-top-bar">${!isNew && hasReceipt ? '<a href="/notes/proof/' + id + '/" class="on-chain-pill"><img src="' + ONCHAIN_ICON + '" alt=""/>On Blockchain</a>' : ''}</div>
+                <div class="note-editor-header"><input type="text" id="note-editor-title" class="note-title-input" value="${esc(title || '')}" placeholder="Your note title..."/></div>
+                <div class="note-editor-toolbar"><div class="note-editor-meta"><span class="last-modified">Last modified: ${time}</span></div></div>
+                <div class="note-editor-body"><textarea id="note-editor-content" class="note-content-textarea" placeholder="Start typing...">${esc(content || '')}</textarea></div>
+                <div class="editor-actions"><button id="save-note-btn" class="btn-save">Save Note</button>${!isNew ? '<button id="delete-note-btn" class="btn-delete">Delete</button>' : '<button id="cancel-note-btn" class="btn-cancel">Cancel</button>'}</div>
+            </div></div>`;
         }
 
         function openEditor(id, title, content, time, hasReceipt) {
@@ -196,8 +200,8 @@
                     btn.classList.remove('loading'); btn.disabled = false;
                     if (data.success) {
                         if (!activeId) {
-                            const card = makeCard({ id: data.note_id, title, content, created_at: new Date().toISOString(), has_receipt: !!data.tx_hash });
-                            const empty = grid.querySelector('.empty-state-grid:not(.search-empty-state)');
+                            const card = makeCard({ id: data.note_id, title, content, created_at: new Date().toISOString(), has_receipt: !!data.tx_hash, is_pinned: false });
+                            const empty = document.querySelector('.empty-state-container');
                             if (empty) empty.remove();
                             grid.insertBefore(card, grid.firstChild);
                             card.classList.add('fade-in');
@@ -235,7 +239,8 @@
                         const card = document.querySelector(`[data-note-id="${id}"]`);
                         if (card) { card.classList.add('fade-out'); setTimeout(() => { card.remove(); updateCount(); checkEmpty(); }, 300); }
                         closeEditor();
-                        showToast('Note deleted', 'success');
+                        showToast('Note moved to trash', 'success');
+                        checkEmpty();
                     } else { btn.classList.remove('loading'); btn.disabled = false; showToast('Delete failed', 'error'); }
                 })
                 .catch(() => { btn.classList.remove('loading'); btn.disabled = false; showToast('Delete failed', 'error'); });
@@ -252,21 +257,21 @@
             d.dataset.noteColor = n.color || 'default';
             d.dataset.notePinned = n.is_pinned ? 'true' : 'false';
             d.innerHTML = `<div class="card-actions">
-            <button class="action-btn pin-btn" data-note-id="${n.id}">📌</button>
-            <button class="action-btn archive-btn" data-note-id="${n.id}">📦</button>
-            <button class="action-btn trash-btn" data-note-id="${n.id}">🗑️</button>
-            <div class="color-picker-wrapper"><button class="action-btn color-btn" data-note-id="${n.id}">🎨</button>
-            <div class="color-picker-menu" data-note-id="${n.id}">
-                <button class="color-option" data-color="default" style="background:rgba(255,255,255,0.1)"></button>
-                <button class="color-option" data-color="red" style="background:#ff6b6b"></button>
-                <button class="color-option" data-color="blue" style="background:#4ecdc4"></button>
-                <button class="color-option" data-color="green" style="background:#95e1d3"></button>
-                <button class="color-option" data-color="yellow" style="background:#f9ca24"></button>
-                <button class="color-option" data-color="purple" style="background:#a29bfe"></button>
-            </div></div></div>
-            <div class="card-header"><h3 class="card-title">${esc(n.title)}</h3>${n.has_receipt ? '<span class="status-badge on-chain"><img src="' + ONCHAIN_ICON + '" alt=""/>On-chain</span>' : ''}</div>
-            <div class="card-body"><p class="card-preview">${esc(trunc(n.content, 120))}</p></div>
-            <div class="card-footer"><div class="card-tags"><span class="tag-pill">General</span></div><span class="card-date">Just now</span></div>`;
+                <button class="action-btn pin-btn" data-note-id="${n.id}">📌</button>
+                <button class="action-btn archive-btn" data-note-id="${n.id}">📦</button>
+                <button class="action-btn trash-btn" data-note-id="${n.id}">🗑️</button>
+                <div class="color-picker-wrapper"><button class="action-btn color-btn" data-note-id="${n.id}">🎨</button>
+                <div class="color-picker-menu" data-note-id="${n.id}">
+                    <button class="color-option" data-color="default" style="background:rgba(255,255,255,0.1)"></button>
+                    <button class="color-option" data-color="red" style="background:#ff6b6b"></button>
+                    <button class="color-option" data-color="blue" style="background:#4ecdc4"></button>
+                    <button class="color-option" data-color="green" style="background:#95e1d3"></button>
+                    <button class="color-option" data-color="yellow" style="background:#f9ca24"></button>
+                    <button class="color-option" data-color="purple" style="background:#a29bfe"></button>
+                </div></div></div>
+                <div class="card-header"><h3 class="card-title">${esc(n.title)}</h3>${n.has_receipt ? '<span class="status-badge on-chain"><img src="' + ONCHAIN_ICON + '" alt=""/>On-chain</span>' : ''}</div>
+                <div class="card-body"><p class="card-preview">${esc(trunc(n.content, 120))}</p></div>
+                <div class="card-footer"><div class="card-tags"><span class="tag-pill">General</span></div><span class="card-date">Just now</span></div>`;
             return d;
         }
 
@@ -276,11 +281,18 @@
         }
 
         function checkEmpty() {
-            if (!document.querySelectorAll('.note-card').length && !grid.querySelector('.empty-state-grid')) {
+            if (!document.querySelectorAll('.note-card').length && !document.querySelector('.empty-state-container')) {
                 const e = document.createElement('div');
-                e.className = 'empty-state-grid';
-                e.innerHTML = '<div class="empty-state-icon-wrapper"><span style="font-size:40px">📝</span></div><h3>No notes yet</h3><p>Create your first note</p>';
-                grid.appendChild(e);
+                e.className = 'empty-state-container';
+                e.innerHTML = `<div class="empty-state-grid">
+                    <div class="empty-state-icon-wrapper"><span style="font-size:40px">📝</span></div>
+                    <h3>No notes yet</h3>
+                    <p>Create your first blockchain-secured note</p>
+                </div>`;
+                const dashboard = document.getElementById('notes-dashboard');
+                if (dashboard) {
+                    dashboard.appendChild(e);
+                }
             }
         }
 

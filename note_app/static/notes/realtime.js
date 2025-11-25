@@ -144,23 +144,25 @@
     }
 
     function checkEmptyState() {
-        const container = document.getElementById('notes-grid-container');
-        if (!container) return;
+        const dashboard = document.getElementById('notes-dashboard');
+        if (!dashboard) return;
 
-        const remainingCards = container.querySelectorAll('.note-card');
-        const existingEmpty = container.querySelector('.empty-state-grid:not(.search-empty-state)');
+        const remainingCards = document.querySelectorAll('.note-card');
+        const existingEmpty = document.querySelector('.empty-state-container');
 
         if (remainingCards.length === 0 && !existingEmpty) {
             const emptyState = document.createElement('div');
-            emptyState.className = 'empty-state-grid';
+            emptyState.className = 'empty-state-container';
             emptyState.innerHTML = `
-                <div class="empty-state-icon-wrapper">
-                    <span style="font-size: 40px;">📝</span>
+                <div class="empty-state-grid">
+                    <div class="empty-state-icon-wrapper">
+                        <span style="font-size: 40px;">📝</span>
+                    </div>
+                    <h3>No notes yet</h3>
+                    <p>Create your first blockchain-secured note</p>
                 </div>
-                <h3>No notes yet</h3>
-                <p>Create your first blockchain-secured note</p>
             `;
-            container.appendChild(emptyState);
+            dashboard.appendChild(emptyState);
         }
     }
 
