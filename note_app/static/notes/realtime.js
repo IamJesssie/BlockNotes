@@ -242,6 +242,11 @@
         if (!card) return;
 
         const currentView = document.body.dataset.currentView || 'all';
+        const isArchiveView = currentView === 'archive';
+        const buttonTitle = btn.getAttribute('title') || '';
+
+        // Determine if we're archiving or unarchiving based on button title
+        const isUnarchiving = isArchiveView || buttonTitle.toLowerCase().includes('unarchive');
 
         // Add loading state
         btn.classList.add('loading');
@@ -268,13 +273,13 @@
                     card.dataset.noteArchived = data.is_archived ? 'true' : 'false';
                     showToast(data.message || (data.is_archived ? 'Note archived' : 'Note unarchived'), 'success');
                 } else {
-                    showToast('Failed to archive note', 'error');
+                    showToast('Failed to update archive status', 'error');
                 }
             })
             .catch(err => {
                 btn.classList.remove('loading');
                 console.error('Archive failed:', err);
-                showToast('Failed to archive note', 'error');
+                showToast('Failed to update archive status', 'error');
             });
     }
 

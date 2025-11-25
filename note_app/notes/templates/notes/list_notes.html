@@ -62,8 +62,13 @@
                     <button class="action-btn restore-btn" data-note-id="{{ note.id }}" title="Restore">↩️</button>
                     {% else %}
                     <button class="action-btn pin-btn {% if note.is_pinned %}pinned{% endif %}"
-                        data-note-id="{{ note.id }}" title="Pin">📌</button>
+                        data-note-id="{{ note.id }}"
+                        title="{% if note.is_pinned %}Unpin{% else %}Pin{% endif %}">📌</button>
+                    {% if current_view == 'archive' %}
+                    <button class="action-btn archive-btn" data-note-id="{{ note.id }}" title="Unarchive">📂</button>
+                    {% else %}
                     <button class="action-btn archive-btn" data-note-id="{{ note.id }}" title="Archive">📦</button>
+                    {% endif %}
                     <button class="action-btn trash-btn" data-note-id="{{ note.id }}" title="Trash">🗑️</button>
                     <div class="color-picker-wrapper">
                         <button class="action-btn color-btn" data-note-id="{{ note.id }}" title="Color">🎨</button>
@@ -214,12 +219,12 @@
         }
 
         function deleteNote() {
-            if (!activeId || !confirm('Delete this note permanently?')) return;
+            if (!activeId || !confirm('Move this note to trash?')) return;
             const btn = document.getElementById('delete-note-btn');
             btn.classList.add('loading'); btn.disabled = true;
             const id = activeId;
 
-            fetch(`/notes/delete/${id}/`, {
+            fetch(`/notes/trash/${id}/`, {
                 method: 'POST',
                 headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: `csrfmiddlewaretoken=${CSRF}`
