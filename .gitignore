@@ -61,3 +61,7 @@ node_modules/
 npm-debug.log*
 
 # Database
+*.db
+
+# Environment variables
+.env
