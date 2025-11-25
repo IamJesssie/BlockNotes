@@ -27,37 +27,33 @@
                     <input type="text" id="search-input" placeholder="Search notes..."
                         value="{{ search_query|default:'' }}" aria-label="Search notes" role="search">
                 </div>
-            </div>
-            <div class="toolbar-right">
-                <div class="sort-dropdown" id="sort-dropdown" role="listbox" aria-label="Sort notes">
-                    <button class="sort-dropdown-toggle" id="sort-dropdown-toggle" aria-haspopup="true"
-                        aria-expanded="false">
-                        <img src="{% static 'notes/img/Icon-4.svg' %}" alt="Sort" class="sort-icon"
-                            aria-hidden="true" />
-                        <span id="sort-current">Newest</span>
-                        <span class="note-count" id="note-count">{{ notes|length }} notes</span>
-                    </button>
-                    <div class="sort-dropdown-menu" aria-hidden="true">
-                        <div class="sort-option" data-value="newest" aria-selected="true">Newest</div>
-                        <div class="sort-option" data-value="oldest" aria-selected="false">Oldest</div>
-                        <div class="sort-option" data-value="title-asc" aria-selected="false">Title A-Z</div>
-                        <div class="sort-option" data-value="title-desc" aria-selected="false">Title Z-A</div>
+                <!-- Sort button moved to toolbar-right for mobile positioning -->
+                <div class="sort-dropdown-mobile-wrapper">
+                    <div class="sort-dropdown" id="sort-dropdown" role="listbox" aria-label="Sort notes">
+                        <button class="sort-dropdown-toggle" id="sort-dropdown-toggle" aria-haspopup="true"
+                            aria-expanded="false">
+                            <img src="{% static 'notes/img/Icon-4.svg' %}" alt="Sort" class="sort-icon"
+                                aria-hidden="true" />
+                            <span id="sort-current">Newest</span>
+                        </button>
+                        <div class="sort-dropdown-menu" aria-hidden="true">
+                            <div class="sort-option" data-value="newest" aria-selected="true">Newest</div>
+                            <div class="sort-option" data-value="oldest" aria-selected="false">Oldest</div>
+                            <div class="sort-option" data-value="title-asc" aria-selected="false">Title A-Z</div>
+                            <div class="sort-option" data-value="title-desc" aria-selected="false">Title Z-A</div>
+                        </div>
                     </div>
                 </div>
+            </div>
+            <div class="toolbar-right">
                 <a href="#" class="btn-new-note" id="new-note-btn-web" aria-label="Create new note">
                     <img src="{% static 'notes/img/Icon-7.svg' %}" alt="+" aria-hidden="true" />
                     New Note
                 </a>
                 <div class="note-count-mobile" id="note-count-mobile">{{ notes|length }} notes</div>
-                <div class="toolbar-status">
-                    <div class="blockchain-status-widget {% if blockchain_status %}online{% else %}offline{% endif %}"
-                        aria-label="Blockchain status">
-                        <span class="glowing-dot"></span>
-                        <span id="blockchain-status-text">{% if blockchain_status %}Chain Online{% else %}Chain
-                            Offline{% endif %}</span>
-                    </div>
-                </div>
+                <!-- Blockchain status removed -->
             </div>
+            <!-- Mobile sort dropdown removed from here -->
         </div>
         <a href="#" class="btn-new-note-fab" id="new-note-btn" aria-label="Create new note">
             <img src="{% static 'notes/img/Icon-7.svg' %}" alt="+" aria-hidden="true" />
@@ -173,7 +169,7 @@
         function editorHTML(id, title, content, time, hasReceipt) {
             const isNew = !id;
             return `<div class="note-editor-view"><div class="note-editor-container">
-                <div class="editor-top-bar">${!isNew && hasReceipt ? '<a href="/notes/proof/' + id + '/" class="on-chain-pill"><img src="' + ONCHAIN_ICON + '" alt=""/>On Blockchain</a>' : ''}</div>
+                <div class="editor-top-bar"><button id="close-editor-btn" class="btn-close-editor" aria-label="Close editor">×</button>${!isNew && hasReceipt ? '<a href="/notes/proof/' + id + '/" class="on-chain-pill"><img src="' + ONCHAIN_ICON + '" alt=""/>On Blockchain</a>' : ''}</div>
                 <div class="note-editor-header"><input type="text" id="note-editor-title" class="note-title-input" value="${esc(title || '')}" placeholder="Your note title..."/></div>
                 <div class="note-editor-toolbar"><div class="note-editor-meta"><span class="last-modified">Last modified: ${time}</span></div></div>
                 <div class="note-editor-body"><textarea id="note-editor-content" class="note-content-textarea" placeholder="Start typing...">${esc(content || '')}</textarea></div>
@@ -191,6 +187,7 @@
             document.getElementById('save-note-btn')?.addEventListener('click', saveNote);
             document.getElementById('delete-note-btn')?.addEventListener('click', deleteNote);
             document.getElementById('cancel-note-btn')?.addEventListener('click', closeEditor);
+            document.getElementById('close-editor-btn')?.addEventListener('click', closeEditor);
         }
 
         function closeEditor() {
@@ -328,8 +325,27 @@
             if (e.target.closest('.card-actions') || e.target.closest('.color-picker-menu')) return;
             const card = e.target.closest('.note-card');
             if (card) {
+                // For mobile devices: toggle action buttons on tap
+                if (window.matchMedia('(hover: none), (pointer: coarse)').matches) {
+                    // Close all other action menus first
+                    document.querySelectorAll('.note-card').forEach(c => {
+                        c.classList.remove('active-actions');
+                    });
+                    // Toggle current card's action menu
+                    card.classList.toggle('active-actions');
+                }
+
                 openEditor(card.dataset.noteId, card.dataset.noteTitle, card.dataset.noteContent,
                     card.querySelector('.card-date')?.textContent || 'Unknown', card.dataset.noteHasReceipt === 'true');
+            }
+        });
+
+        // Close action menus when clicking outside
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.note-card') && !e.target.closest('.card-actions')) {
+                document.querySelectorAll('.note-card').forEach(card => {
+                    card.classList.remove('active-actions');
+                });
             }
         });
 
@@ -347,63 +363,134 @@
             if (e.key === 'Escape' && editor.style.display !== 'none') { e.preventDefault(); closeEditor(); }
         });
 
-        // Blockchain status polling
-        function checkStatus() {
-            fetch(STATUS_URL).then(r => r.json()).then(d => {
-                const txt = document.getElementById('blockchain-status-text');
-                const dot = document.querySelector('.glowing-dot');
-                if (txt) txt.textContent = d.is_connected ? 'Chain Online' : 'Chain Offline';
-                if (dot) dot.style.backgroundColor = d.is_connected ? '#00D9FF' : '#dc3545';
-            }).catch(() => { });
-        }
-        setInterval(checkStatus, 5000);
-        checkStatus();
+        // Blockchain status polling removed
 
-        // Sort dropdown functionality
-        const sortDropdown = document.getElementById('sort-dropdown');
-        const sortToggle = document.getElementById('sort-dropdown-toggle');
-        const sortOptions = document.querySelectorAll('.sort-option');
-        const sortCurrent = document.getElementById('sort-current');
+        // Sort functionality for both desktop and mobile
+        const SORT_OPTIONS = [
+            { value: 'newest', label: 'Newest', sortFn: (a, b) => new Date(b.dataset.noteCreated) - new Date(a.dataset.noteCreated) },
+            { value: 'oldest', label: 'Oldest', sortFn: (a, b) => new Date(a.dataset.noteCreated) - new Date(b.dataset.noteCreated) },
+            { value: 'title-asc', label: 'Title A-Z', sortFn: (a, b) => a.dataset.noteTitle.localeCompare(b.dataset.noteTitle) },
+            { value: 'title-desc', label: 'Title Z-A', sortFn: (a, b) => b.dataset.noteTitle.localeCompare(a.dataset.noteTitle) }
+        ];
 
-        if (sortToggle && sortDropdown) {
-            sortToggle.addEventListener('click', function (e) {
-                e.stopPropagation();
-                sortDropdown.classList.toggle('open');
-                sortToggle.setAttribute('aria-expanded', sortDropdown.classList.contains('open'));
-            });
+        // Initialize sort dropdowns (desktop and mobile)
+        function initializeSortDropdown(dropdownId, toggleId, currentId) {
+            const dropdown = document.getElementById(dropdownId);
+            const toggle = document.getElementById(toggleId);
+            const current = document.getElementById(currentId);
+            const options = dropdown ? dropdown.querySelectorAll('.sort-option') : [];
 
-            sortOptions.forEach(option => {
-                option.addEventListener('click', function () {
-                    // Remove selected state from all options
-                    sortOptions.forEach(opt => {
-                        opt.setAttribute('aria-selected', 'false');
-                        opt.classList.remove('selected');
-                    });
-
-                    // Set selected state on clicked option
-                    this.setAttribute('aria-selected', 'true');
-                    this.classList.add('selected');
-
-                    // Update current sort text
-                    sortCurrent.textContent = this.textContent;
-
-                    // Close dropdown
-                    sortDropdown.classList.remove('open');
-                    sortToggle.setAttribute('aria-expanded', 'false');
-
-                    // TODO: Implement actual sorting functionality
-                    console.log('Sort by:', this.dataset.value);
+            if (toggle && dropdown) {
+                toggle.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    dropdown.classList.toggle('open');
+                    toggle.setAttribute('aria-expanded', dropdown.classList.contains('open'));
                 });
+
+                options.forEach(option => {
+                    option.addEventListener('click', function () {
+                        // Remove selected state from all options
+                        options.forEach(opt => {
+                            opt.setAttribute('aria-selected', 'false');
+                            opt.classList.remove('selected');
+                        });
+
+                        // Set selected state on clicked option
+                        this.setAttribute('aria-selected', 'true');
+                        this.classList.add('selected');
+
+                        // Update current sort text
+                        if (current) current.textContent = this.textContent;
+
+                        // Close dropdown
+                        dropdown.classList.remove('open');
+                        toggle.setAttribute('aria-expanded', 'false');
+
+                        // Apply sorting
+                        const selectedOption = SORT_OPTIONS.find(opt => opt.value === this.dataset.value);
+                        if (selectedOption) {
+                            sortNotesClient(selectedOption.sortFn);
+
+                            // Update URL
+                            const params = new URLSearchParams(window.location.search);
+                            params.set('sort', this.dataset.value);
+                            const newUrl = window.location.pathname + (params.toString() ? ('?' + params.toString()) : '');
+                            try {
+                                window.history.replaceState({}, '', newUrl);
+                            } catch (err) {
+                                console.debug('history.replaceState failed', err);
+                            }
+                        }
+                    });
+                });
+
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function (e) {
+                    if (!dropdown.contains(e.target)) {
+                        dropdown.classList.remove('open');
+                        toggle.setAttribute('aria-expanded', 'false');
+                    }
+                });
+            }
+        }
+
+        // Initialize both sort dropdowns
+        initializeSortDropdown('sort-dropdown', 'sort-dropdown-toggle', 'sort-current');
+        initializeSortDropdown('sort-dropdown-mobile', 'sort-dropdown-toggle-mobile', 'sort-current-mobile');
+
+        // Set initial sort based on URL or default
+        function setInitialSort() {
+            const params = new URLSearchParams(window.location.search);
+            const sortParam = params.get('sort') || 'newest';
+            const initialOption = SORT_OPTIONS.find(opt => opt.value === sortParam) || SORT_OPTIONS[0];
+
+            // Update desktop dropdown
+            const desktopCurrent = document.getElementById('sort-current');
+            const desktopOptions = document.querySelectorAll('#sort-dropdown .sort-option');
+            if (desktopCurrent) desktopCurrent.textContent = initialOption.label;
+            desktopOptions.forEach(opt => {
+                opt.setAttribute('aria-selected', opt.dataset.value === initialOption.value ? 'true' : 'false');
+                opt.classList.toggle('selected', opt.dataset.value === initialOption.value);
             });
 
-            // Close dropdown when clicking outside
-            document.addEventListener('click', function (e) {
-                if (!sortDropdown.contains(e.target)) {
-                    sortDropdown.classList.remove('open');
-                    sortToggle.setAttribute('aria-expanded', 'false');
-                }
-            });
+            // Update mobile dropdown
+            const mobileCurrent = document.getElementById('sort-current-mobile');
+            if (mobileCurrent) mobileCurrent.textContent = initialOption.label;
+
+            // Apply initial sort
+            sortNotesClient(initialOption.sortFn);
         }
+
+        // Update sortNotesClient to accept a sort function
+        function sortNotesClient(sortFn) {
+            const container = document.getElementById('notes-grid-container');
+            if (!container) return;
+            const items = Array.from(container.querySelectorAll('.note-card'));
+
+            // Separate pinned and unpinned notes
+            const pinned = items.filter(card => card.dataset.notePinned === 'true');
+            const unpinned = items.filter(card => card.dataset.notePinned !== 'true');
+
+            // Sort using the provided function
+            pinned.sort(sortFn);
+            unpinned.sort(sortFn);
+
+            const frag = document.createDocumentFragment();
+            // Pinned notes first
+            pinned.forEach(it => frag.appendChild(it));
+            unpinned.forEach(it => frag.appendChild(it));
+
+            // Preserve empty state if exists
+            const emptyState = container.querySelector('.empty-state-container');
+            container.innerHTML = '';
+            container.appendChild(frag);
+            if (emptyState && items.length === 0) {
+                container.appendChild(emptyState);
+            }
+        }
+
+        // Set initial sort
+        setInitialSort();
 
         // Logout modal
         const logoutBtn = document.querySelector('.logout-button');

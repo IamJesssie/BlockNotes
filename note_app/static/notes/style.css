@@ -59,8 +59,8 @@ body {
     background: var(--header-bg);
     border: 1px solid var(--header-border);
     border-radius: 16px;
-    margin: 32px 16px 12px;
-    /* lowered from the top and added breathing space below */
+    margin: 48px 16px 12px;
+    /* lowered from the top for better spacing */
     padding: 0 24px;
     height: 64px;
     display: flex;
@@ -426,42 +426,6 @@ body {
 .btn-new-note img {
     width: 14px;
     height: 14px;
-}
-
-.blockchain-status-widget {
-    background: linear-gradient(to right, rgba(0, 217, 255, 0.1), rgba(56, 75, 255, 0.1));
-    border: 1px solid rgba(0, 217, 255, 0.3);
-    border-radius: 8px;
-    padding: 8px 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--accent-cyan);
-    font-size: 12px;
-    margin-bottom: 12px;
-    box-shadow: 0px 0px 40px 0px rgba(0, 217, 255, 0.15), 0px 0px 20px 0px rgba(0, 217, 255, 0.3);
-}
-
-.glowing-dot {
-    width: 8px;
-    height: 8px;
-    background-color: #00D9FF;
-    border-radius: 50%;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(0, 217, 255, 0.7);
-    }
-
-    70% {
-        box-shadow: 0 0 0 10px rgba(0, 217, 255, 0);
-    }
-
-    100% {
-        box-shadow: 0 0 0 0 rgba(0, 217, 255, 0);
-    }
 }
 
 .sidebar-search input {
@@ -1586,7 +1550,34 @@ body {
     /* Editor Top Bar */
     .editor-top-bar {
         display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
     }
+
+    /* Close Editor Button */
+    .btn-close-editor {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        color: var(--text-primary);
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 20px;
+        line-height: 1;
+    }
+
+    .btn-close-editor:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-1px);
+    }
+
+    /* Mobile sort dropdown removed - now integrated with view tabs */
 
     /* Editor Actions - No Extra Space */
     .note-editor-view .editor-actions {
@@ -2473,12 +2464,62 @@ body {
 }
 
 /* Toolbar adjustments */
+@media (max-width: 768px) {
+
+    /* Show mobile sort wrapper and hide desktop sort in toolbar-left */
+    .sort-dropdown-mobile-wrapper {
+        display: block;
+    }
+
+    /* Hide the sort dropdown inside view-tabs on mobile */
+    .view-tabs .sort-dropdown {
+        display: none;
+    }
+
+    /* Position sort button next to trash button in mobile */
+    .toolbar-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    /* Make sort button appear as part of toolbar-right on mobile */
+    .sort-dropdown-mobile-wrapper {
+        order: 3;
+        margin-left: auto;
+    }
+
+    /* Adjust note count positioning */
+    .note-count-mobile {
+        order: 2;
+        margin-left: auto;
+    }
+
+    /* Hide web new note button on mobile */
+    .btn-new-note {
+        display: none;
+    }
+}
+
 @media (max-width: 480px) {
     .btn-new-note-fab {
         bottom: 16px;
         right: 16px;
         width: 52px;
         height: 52px;
+    }
+
+    /* Ensure sort button has proper styling on small mobile */
+    .sort-dropdown-mobile-wrapper .sort-dropdown-toggle {
+        padding: 6px 10px;
+        font-size: 12px;
+        min-height: 36px;
+    }
+
+    /* Adjust spacing for very small screens */
+    .toolbar-right {
+        gap: 6px;
     }
 }
 
@@ -2516,6 +2557,7 @@ body {
     display: flex;
     gap: 8px;
     margin-right: 16px;
+    align-items: center;
 }
 
 .view-tab {
@@ -2545,6 +2587,30 @@ body {
     box-shadow: 0 4px 12px rgba(56, 75, 255, 0.3);
 }
 
+/* Sort dropdown in view tabs */
+.view-tabs .sort-dropdown {
+    position: relative;
+}
+
+.view-tabs .sort-dropdown-toggle {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 6px 12px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.view-tabs .sort-dropdown-toggle:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: var(--text-primary);
+}
+
 /* Card Actions Bar */
 .card-actions {
     position: absolute;
@@ -2557,8 +2623,24 @@ body {
     z-index: 10;
 }
 
-.note-card:hover .card-actions {
-    opacity: 1;
+/* Show actions on hover for desktop */
+@media (hover: hover) {
+    .note-card:hover .card-actions {
+        opacity: 1;
+    }
+}
+
+/* Always show actions on mobile (touch devices) */
+@media (hover: none),
+(pointer: coarse) {
+    .note-card .card-actions {
+        opacity: 1;
+    }
+
+    /* But hide when card is being clicked to open editor */
+    .note-card:active .card-actions {
+        opacity: 0;
+    }
 }
 
 .action-btn {
