@@ -8,43 +8,60 @@
     <div id="notes-dashboard" class="notes-dashboard">
         <div class="dashboard-toolbar">
             <div class="toolbar-left">
-                <div class="view-tabs">
+                <div class="view-tabs" role="tablist" aria-label="Note view filters">
                     <a href="?view=all"
-                        class="view-tab {% if current_view == 'all' or not current_view %}active{% endif %}">📝 All
+                        class="view-tab {% if current_view == 'all' or not current_view %}active{% endif %}" role="tab"
+                        aria-selected="{% if current_view == 'all' or not current_view %}true{% else %}false{% endif %}">📝
+                        All
                         Notes</a>
-                    <a href="?view=archive" class="view-tab {% if current_view == 'archive' %}active{% endif %}">📦
+                    <a href="?view=archive" class="view-tab {% if current_view == 'archive' %}active{% endif %}"
+                        role="tab" aria-selected="{% if current_view == 'archive' %}true{% else %}false{% endif %}">📦
                         Archive</a>
-                    <a href="?view=trash" class="view-tab {% if current_view == 'trash' %}active{% endif %}">🗑️
+                    <a href="?view=trash" class="view-tab {% if current_view == 'trash' %}active{% endif %}" role="tab"
+                        aria-selected="{% if current_view == 'trash' %}true{% else %}false{% endif %}">🗑️
                         Trash</a>
                 </div>
                 <div class="toolbar-search">
-                    <img src="{% static 'notes/img/Icon-5.svg' %}" alt="Search" class="search-icon" />
+                    <img src="{% static 'notes/img/Icon-5.svg' %}" alt="Search" class="search-icon"
+                        aria-hidden="true" />
                     <input type="text" id="search-input" placeholder="Search notes..."
-                        value="{{ search_query|default:'' }}" aria-label="Search notes">
+                        value="{{ search_query|default:'' }}" aria-label="Search notes" role="search">
                 </div>
+            </div>
+            <div class="toolbar-right">
+                <div class="sort-dropdown" id="sort-dropdown" role="listbox" aria-label="Sort notes">
+                    <button class="sort-dropdown-toggle" id="sort-dropdown-toggle" aria-haspopup="true"
+                        aria-expanded="false">
+                        <img src="{% static 'notes/img/Icon-4.svg' %}" alt="Sort" class="sort-icon"
+                            aria-hidden="true" />
+                        <span id="sort-current">Newest</span>
+                        <span class="note-count" id="note-count">{{ notes|length }} notes</span>
+                    </button>
+                    <div class="sort-dropdown-menu" aria-hidden="true">
+                        <div class="sort-option" data-value="newest" aria-selected="true">Newest</div>
+                        <div class="sort-option" data-value="oldest" aria-selected="false">Oldest</div>
+                        <div class="sort-option" data-value="title-asc" aria-selected="false">Title A-Z</div>
+                        <div class="sort-option" data-value="title-desc" aria-selected="false">Title Z-A</div>
+                    </div>
+                </div>
+                <a href="#" class="btn-new-note" id="new-note-btn-web" aria-label="Create new note">
+                    <img src="{% static 'notes/img/Icon-7.svg' %}" alt="+" aria-hidden="true" />
+                    New Note
+                </a>
+                <div class="note-count-mobile" id="note-count-mobile">{{ notes|length }} notes</div>
                 <div class="toolbar-status">
-                    <div class="blockchain-status-widget {% if blockchain_status %}online{% else %}offline{% endif %}">
+                    <div class="blockchain-status-widget {% if blockchain_status %}online{% else %}offline{% endif %}"
+                        aria-label="Blockchain status">
                         <span class="glowing-dot"></span>
                         <span id="blockchain-status-text">{% if blockchain_status %}Chain Online{% else %}Chain
                             Offline{% endif %}</span>
                     </div>
                 </div>
             </div>
-            <div class="toolbar-right">
-                <div class="sort-dropdown" id="sort-dropdown">
-                    <button class="sort-dropdown-toggle" id="sort-dropdown-toggle">
-                        <img src="{% static 'notes/img/Icon-4.svg' %}" alt="Sort" class="sort-icon"
-                            style="width:16px; height:16px; margin-right:6px;" />
-                        <span id="sort-current">Newest</span>
-                        <span class="note-count" id="note-count">{{ notes|length }} notes</span>
-                    </button>
-                </div>
-                <a href="#" class="btn-new-note" id="new-note-btn">
-                    <img src="{% static 'notes/img/Icon-7.svg' %}" alt="+" />
-                    New Note
-                </a>
-            </div>
         </div>
+        <a href="#" class="btn-new-note-fab" id="new-note-btn" aria-label="Create new note">
+            <img src="{% static 'notes/img/Icon-7.svg' %}" alt="+" aria-hidden="true" />
+        </a>
 
         <div class="notes-grid" id="notes-grid-container">
             {% if notes %}
@@ -146,7 +163,8 @@
         const grid = document.getElementById('notes-grid-container');
         const editor = document.getElementById('main-editor-pane');
         const dashboard = document.getElementById('notes-dashboard');
-        const newBtn = document.getElementById('new-note-btn');
+        const newBtnFab = document.getElementById('new-note-btn');
+        const newBtnWeb = document.getElementById('new-note-btn-web');
         let activeId = null;
 
         function esc(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
@@ -276,8 +294,17 @@
         }
 
         function updateCount() {
-            const el = document.getElementById('note-count');
-            if (el) { const c = document.querySelectorAll('.note-card:not(.fade-out)').length; el.textContent = c + ' note' + (c !== 1 ? 's' : ''); }
+            const desktopCount = document.getElementById('note-count');
+            const mobileCount = document.getElementById('note-count-mobile');
+            const c = document.querySelectorAll('.note-card:not(.fade-out)').length;
+
+            if (desktopCount) {
+                desktopCount.textContent = c + ' note' + (c !== 1 ? 's' : '');
+            }
+
+            if (mobileCount) {
+                mobileCount.textContent = c + ' note' + (c !== 1 ? 's' : '');
+            }
         }
 
         function checkEmpty() {
@@ -306,7 +333,15 @@
             }
         });
 
-        newBtn?.addEventListener('click', function (e) { e.preventDefault(); openEditor(null, '', '', 'Just now', false); });
+        // Attach click handlers to BOTH new note buttons (FAB for mobile, regular for web)
+        function handleNewNoteClick(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            openEditor(null, '', '', 'Just now', false);
+        }
+
+        newBtnFab?.addEventListener('click', handleNewNoteClick);
+        newBtnWeb?.addEventListener('click', handleNewNoteClick);
 
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape' && editor.style.display !== 'none') { e.preventDefault(); closeEditor(); }
@@ -323,6 +358,52 @@
         }
         setInterval(checkStatus, 5000);
         checkStatus();
+
+        // Sort dropdown functionality
+        const sortDropdown = document.getElementById('sort-dropdown');
+        const sortToggle = document.getElementById('sort-dropdown-toggle');
+        const sortOptions = document.querySelectorAll('.sort-option');
+        const sortCurrent = document.getElementById('sort-current');
+
+        if (sortToggle && sortDropdown) {
+            sortToggle.addEventListener('click', function (e) {
+                e.stopPropagation();
+                sortDropdown.classList.toggle('open');
+                sortToggle.setAttribute('aria-expanded', sortDropdown.classList.contains('open'));
+            });
+
+            sortOptions.forEach(option => {
+                option.addEventListener('click', function () {
+                    // Remove selected state from all options
+                    sortOptions.forEach(opt => {
+                        opt.setAttribute('aria-selected', 'false');
+                        opt.classList.remove('selected');
+                    });
+
+                    // Set selected state on clicked option
+                    this.setAttribute('aria-selected', 'true');
+                    this.classList.add('selected');
+
+                    // Update current sort text
+                    sortCurrent.textContent = this.textContent;
+
+                    // Close dropdown
+                    sortDropdown.classList.remove('open');
+                    sortToggle.setAttribute('aria-expanded', 'false');
+
+                    // TODO: Implement actual sorting functionality
+                    console.log('Sort by:', this.dataset.value);
+                });
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function (e) {
+                if (!sortDropdown.contains(e.target)) {
+                    sortDropdown.classList.remove('open');
+                    sortToggle.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
 
         // Logout modal
         const logoutBtn = document.querySelector('.logout-button');

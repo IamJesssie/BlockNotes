@@ -8,16 +8,16 @@
     </a>
     <div class="user-controls">
         {% if user.is_authenticated %}
-            <div class="user-info-pill">
-                <img src="{% static 'notes/img/Icon-9.svg' %}" alt="User" />
-                <span>{{ user.username }}</span>
-            </div>
-            <a href="{% url 'account_logout' %}" class="logout-button">
-                <img src="{% static 'notes/img/Icon-8.svg' %}" alt="Logout" />
-                Logout
-            </a>
+        <div class="user-info-pill" role="button" tabindex="0" aria-label="User account: {{ user.username }}">
+            <img src="{% static 'notes/img/Icon-9.svg' %}" alt="User avatar" aria-hidden="true" />
+            <span>{{ user.username }}</span>
+        </div>
+        <a href="{% url 'account_logout' %}" class="logout-button" role="button" aria-label="Sign out">
+            <img src="{% static 'notes/img/Icon-8.svg' %}" alt="" aria-hidden="true" />
+            <span class="logout-text">Logout</span>
+        </a>
         {% else %}
-            <a href="{% url 'account_login' %}" class="btn-new-note">Login</a>
+        <a href="{% url 'account_login' %}" class="btn-new-note" role="button" aria-label="Sign in">Login</a>
         {% endif %}
     </div>
 </header>
