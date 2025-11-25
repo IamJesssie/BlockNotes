@@ -9,13 +9,18 @@ https://docs.djangoproject.com/en/4.x/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.x/ref/settings/
 """
-
 from pathlib import Path
 import os
 import dj_database_url
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env file (for local development)
+env_path = BASE_DIR.parent / '.env'
+load_dotenv(dotenv_path=env_path)
+
 
 
 # Quick-start development settings - unsuitable for production
@@ -176,11 +181,6 @@ LOGOUT_REDIRECT_URL = '/'
 # Google OAuth Configuration
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
-        'APP': {
-            'client_id': os.environ.get('GOOGLE_CLIENT_ID', ''),
-            'secret': os.environ.get('GOOGLE_CLIENT_SECRET', ''),
-            'key': ''
-        },
         'SCOPE': [
             'profile',
             'email',
