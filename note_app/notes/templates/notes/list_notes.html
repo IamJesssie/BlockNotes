@@ -5,32 +5,23 @@
 
 {% block content %}
 <div class="notes-app-container">
-    <!-- Dashboard View (Card Grid) -->
     <div id="notes-dashboard" class="notes-dashboard">
-        <!-- Dashboard Toolbar -->
         <div class="dashboard-toolbar">
             <div class="toolbar-left">
-                <!-- View Filter Tabs -->
                 <div class="view-tabs">
                     <a href="?view=all"
-                        class="view-tab {% if current_view == 'all' or not current_view %}active{% endif %}">
-                        📝 All Notes
-                    </a>
-                    <a href="?view=archive" class="view-tab {% if current_view == 'archive' %}active{% endif %}">
-                        📦 Archive
-                    </a>
-                    <a href="?view=trash" class="view-tab {% if current_view == 'trash' %}active{% endif %}">
-                        🗑️ Trash
-                    </a>
+                        class="view-tab {% if current_view == 'all' or not current_view %}active{% endif %}">📝 All
+                        Notes</a>
+                    <a href="?view=archive" class="view-tab {% if current_view == 'archive' %}active{% endif %}">📦
+                        Archive</a>
+                    <a href="?view=trash" class="view-tab {% if current_view == 'trash' %}active{% endif %}">🗑️
+                        Trash</a>
                 </div>
-
-                <!-- Search -->
                 <div class="toolbar-search">
                     <img src="{% static 'notes/img/Icon-5.svg' %}" alt="Search" class="search-icon" />
-                    <input type="text" id="search-input" placeholder="Search notes..." aria-label="Search notes">
+                    <input type="text" id="search-input" placeholder="Search notes..."
+                        value="{{ search_query|default:'' }}" aria-label="Search notes">
                 </div>
-
-                <!-- Blockchain Status -->
                 <div class="toolbar-status">
                     <div class="blockchain-status-widget {% if blockchain_status %}online{% else %}offline{% endif %}">
                         <span class="glowing-dot"></span>
@@ -39,26 +30,15 @@
                     </div>
                 </div>
             </div>
-
             <div class="toolbar-right">
-                <!-- Sort Dropdown -->
-                <div class="sort-dropdown" id="sort-dropdown" data-initial-sort="{{ sort_by }}">
-                    <button class="sort-dropdown-toggle" id="sort-dropdown-toggle" aria-haspopup="true"
-                        aria-expanded="false">
+                <div class="sort-dropdown" id="sort-dropdown">
+                    <button class="sort-dropdown-toggle" id="sort-dropdown-toggle">
                         <img src="{% static 'notes/img/Icon-4.svg' %}" alt="Sort" class="sort-icon"
-                            style="width:16px; height:16px; margin-right:6px; vertical-align:middle;" />
+                            style="width:16px; height:16px; margin-right:6px;" />
                         <span id="sort-current">Newest</span>
                         <span class="note-count" id="note-count">{{ notes|length }} notes</span>
                     </button>
-                    <ul class="sort-dropdown-menu" id="sort-dropdown-menu" role="menu" aria-hidden="true">
-                        <li role="menuitem" data-value="-created_at" class="sort-option">Newest</li>
-                        <li role="menuitem" data-value="created_at" class="sort-option">Oldest</li>
-                        <li role="menuitem" data-value="title" class="sort-option">A-Z</li>
-                        <li role="menuitem" data-value="-title" class="sort-option">Z-A</li>
-                    </ul>
                 </div>
-
-                <!-- New Note Button -->
                 <a href="#" class="btn-new-note" id="new-note-btn">
                     <img src="{% static 'notes/img/Icon-7.svg' %}" alt="+" />
                     New Note
@@ -66,7 +46,6 @@
             </div>
         </div>
 
-        <!-- Notes Grid -->
         <div class="notes-grid" id="notes-grid-container">
             {% if notes %}
             {% for note in notes %}
@@ -76,29 +55,18 @@
                 data-note-has-receipt="{% if note.blockchain_receipt %}true{% else %}false{% endif %}"
                 data-note-color="{{ note.color|default:'default' }}"
                 data-note-pinned="{{ note.is_pinned|yesno:'true,false' }}"
-                data-note-archived="{{ note.is_archived|yesno:'true,false' }}">
-
-                <!-- Quick Actions Bar -->
+                data-note-archived="{{ note.is_archived|yesno:'true,false' }}"
+                data-note-tags="{{ note.tags|default:'General' }}">
                 <div class="card-actions">
                     {% if current_view == 'trash' %}
-                    <button class="action-btn restore-btn" data-note-id="{{ note.id }}" title="Restore from trash">
-                        ↩️
-                    </button>
+                    <button class="action-btn restore-btn" data-note-id="{{ note.id }}" title="Restore">↩️</button>
                     {% else %}
                     <button class="action-btn pin-btn {% if note.is_pinned %}pinned{% endif %}"
-                        data-note-id="{{ note.id }}" title="{% if note.is_pinned %}Unpin{% else %}Pin{% endif %}">
-                        📌
-                    </button>
-                    <button class="action-btn archive-btn" data-note-id="{{ note.id }}" title="Archive">
-                        📦
-                    </button>
-                    <button class="action-btn trash-btn" data-note-id="{{ note.id }}" title="Move to trash">
-                        🗑️
-                    </button>
+                        data-note-id="{{ note.id }}" title="Pin">📌</button>
+                    <button class="action-btn archive-btn" data-note-id="{{ note.id }}" title="Archive">📦</button>
+                    <button class="action-btn trash-btn" data-note-id="{{ note.id }}" title="Trash">🗑️</button>
                     <div class="color-picker-wrapper">
-                        <button class="action-btn color-btn" data-note-id="{{ note.id }}" title="Change color">
-                            🎨
-                        </button>
+                        <button class="action-btn color-btn" data-note-id="{{ note.id }}" title="Color">🎨</button>
                         <div class="color-picker-menu" data-note-id="{{ note.id }}">
                             <button class="color-option" data-color="default"
                                 style="background: rgba(255,255,255,0.1);"></button>
@@ -111,59 +79,42 @@
                     </div>
                     {% endif %}
                 </div>
-
                 <div class="card-header">
-                    {% if note.is_pinned %}
-                    <span class="pin-indicator" title="Pinned">📌</span>
-                    {% endif %}
+                    {% if note.is_pinned %}<span class="pin-indicator">📌</span>{% endif %}
                     <h3 class="card-title">{{ note.title }}</h3>
                     {% if note.blockchain_receipt %}
-                    <span class="status-badge on-chain">
-                        <img src="{% static 'notes/img/IconOnchain.svg' %}" alt="" />
-                        On-chain
-                    </span>
+                    <span class="status-badge on-chain"><img src="{% static 'notes/img/IconOnchain.svg' %}"
+                            alt="" />On-chain</span>
                     {% endif %}
                 </div>
-
                 <div class="card-body">
                     <p class="card-preview">{{ note.content|truncatechars:120 }}</p>
                 </div>
-
                 <div class="card-footer">
-                    <div class="card-tags">
-                        <span class="tag-pill">{{ note.tags|default:"General" }}</span>
-                    </div>
+                    <div class="card-tags"><span class="tag-pill">{{ note.tags|default:"General" }}</span></div>
                     <span class="card-date">{{ note.created_at|timesince }} ago</span>
                 </div>
             </div>
             {% endfor %}
             {% else %}
             <div class="empty-state-grid">
-                <div class="empty-state-icon-wrapper">
-                    <img src="{% static 'notes/img/Icon-1.svg' %}" alt="Note editor" />
-                    <div class="icon-gradient-fill" aria-hidden="true"></div>
-                </div>
+                <div class="empty-state-icon-wrapper"><span style="font-size: 40px;">📝</span></div>
                 <h3>No notes yet</h3>
                 <p>Create your first blockchain-secured note</p>
             </div>
             {% endif %}
         </div>
     </div>
-
-    <!-- Editor View (Initially Hidden) -->
-    <main class="note-editor-pane" id="main-editor-pane" style="display: none;">
-        <!-- The note editor will appear here when a note is selected -->
-    </main>
+    <main class="note-editor-pane" id="main-editor-pane" style="display: none;"></main>
 </div>
 
-<!-- Logout modal -->
-<div class="modal-backdrop" id="logout-backdrop" aria-hidden="true" role="presentation">
-    <div class="modal-centered" role="dialog" aria-modal="true" aria-labelledby="logout-title">
+<div class="modal-backdrop" id="logout-backdrop" aria-hidden="true">
+    <div class="modal-centered">
         <div class="modal-body">
-            <h2 id="logout-title">Sign out</h2>
+            <h2>Sign out</h2>
             <p>Are you sure you want to sign out?</p>
             <div class="modal-actions">
-                <button id="cancel-logout-btn" class="btn-cancel" type="button">Cancel</button>
+                <button id="cancel-logout-btn" class="btn-cancel">Cancel</button>
                 <form method="POST" action="/accounts/logout/" style="display:inline;">
                     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
                     <button type="submit" class="btn-logout-confirm">Sign out</button>
@@ -175,535 +126,195 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{% static 'notes/realtime.js' %}"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const noteGridContainer = document.getElementById('notes-grid-container');
-        const mainEditorPane = document.getElementById('main-editor-pane');
-        const notesDashboard = document.getElementById('notes-dashboard');
-        const newNoteBtn = document.getElementById('new-note-btn');
-        let activeNoteId = null;
-        const STATIC_LOGOUT_ICON = "{% static 'notes/img/Image-8.svg' %}";
+    (function () {
+        const CSRF = '{{ csrf_token }}';
+        const ONCHAIN_ICON = "{% static 'notes/img/IconOnchain.svg' %}";
+        const CREATE_URL = '{% url "notes:create_note" %}';
+        const STATUS_URL = '{% url "notes:api_blockchain_status" %}';
 
-        // Search and sort handlers
-        const searchInput = document.getElementById('search-input');
-        const initialQuery = "{{ search_query|escapejs }}";
-        const initialSort = "{{ sort_by }}";
-        const SORT_OPTIONS = [
-            { value: '-created_at', label: 'Newest' },
-            { value: 'created_at', label: 'Oldest' },
-            { value: 'title', label: 'A-Z' },
-            { value: '-title', label: 'Z-A' }
-        ];
+        const grid = document.getElementById('notes-grid-container');
+        const editor = document.getElementById('main-editor-pane');
+        const dashboard = document.getElementById('notes-dashboard');
+        const newBtn = document.getElementById('new-note-btn');
+        let activeId = null;
 
-        // Initialize sort dropdown
-        const dropdownWrapper = document.querySelector('.sort-dropdown');
-        if (dropdownWrapper) {
-            const current = dropdownWrapper.querySelector('#sort-current');
-            const toggleBtn = dropdownWrapper.querySelector('#sort-dropdown-toggle');
+        function esc(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+        function trunc(t, n) { return t && t.length > n ? t.substring(0, n) + '...' : (t || ''); }
 
-            const selectedOpt = SORT_OPTIONS.find(o => o.value === initialSort) || SORT_OPTIONS[0];
-            if (current) current.textContent = selectedOpt.label;
-
-            try {
-                sortNotesClient(initialSort);
-            } catch (err) {
-                console.debug('sortNotesClient not available at init:', err);
-            }
-
-            if (toggleBtn) {
-                let currentIndex = SORT_OPTIONS.findIndex(o => o.value === initialSort);
-                if (currentIndex === -1) currentIndex = 0;
-
-                toggleBtn.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-
-                    currentIndex = (currentIndex + 1) % SORT_OPTIONS.length;
-                    const next = SORT_OPTIONS[currentIndex];
-
-                    if (current) current.textContent = next.label;
-                    sortNotesClient(next.value);
-
-                    const params = new URLSearchParams(window.location.search);
-                    if (next.value) params.set('sort', next.value);
-                    else params.delete('sort');
-                    const newUrl = window.location.pathname + (params.toString() ? ('?' + params.toString()) : '');
-                    try {
-                        window.history.replaceState({}, '', newUrl);
-                    } catch (err) {
-                        console.debug('history.replaceState failed', err);
-                    }
-                });
-
-                toggleBtn.addEventListener('keydown', function (e) {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        toggleBtn.click();
-                    }
-                });
-            }
+        function editorHTML(id, title, content, time, hasReceipt) {
+            const isNew = !id;
+            return `<div class="note-editor-view"><div class="note-editor-container">
+            <div class="editor-top-bar">${!isNew && hasReceipt ? '<a href="/notes/proof/' + id + '/" class="on-chain-pill"><img src="' + ONCHAIN_ICON + '" alt=""/>On Blockchain</a>' : ''}</div>
+            <div class="note-editor-header"><input type="text" id="note-editor-title" class="note-title-input" value="${esc(title || '')}" placeholder="Your note title..."/></div>
+            <div class="note-editor-toolbar"><div class="note-editor-meta"><span class="last-modified">Last modified: ${time}</span></div></div>
+            <div class="note-editor-body"><textarea id="note-editor-content" class="note-content-textarea" placeholder="Start typing...">${esc(content || '')}</textarea></div>
+            <div class="editor-actions"><button id="save-note-btn" class="btn-save">Save Note</button>${!isNew ? '<button id="delete-note-btn" class="btn-delete">Delete</button>' : '<button id="cancel-note-btn" class="btn-cancel">Cancel</button>'}</div>
+        </div></div>`;
         }
 
-        if (searchInput) {
-            searchInput.value = initialQuery || '';
-        }
+        function openEditor(id, title, content, time, hasReceipt) {
+            editor.innerHTML = editorHTML(id, title, content, time, hasReceipt);
+            activeId = id;
+            dashboard.style.display = 'none';
+            editor.style.display = 'flex';
+            editor.classList.add('fullscreen');
 
-        function debounce(fn, delay) {
-            let timer;
-            return function (...args) {
-                clearTimeout(timer);
-                timer = setTimeout(() => fn.apply(this, args), delay);
-            };
-        }
-
-        function sortNotesClient(mode) {
-            const container = document.getElementById('notes-grid-container');
-            if (!container) return;
-            const items = Array.from(container.querySelectorAll('.note-card'));
-            const collator = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true });
-
-            items.sort((a, b) => {
-                const aTitle = (a.dataset.noteTitle || '').trim();
-                const bTitle = (b.dataset.noteTitle || '').trim();
-                const aCreated = new Date(a.dataset.noteCreated || 0);
-                const bCreated = new Date(b.dataset.noteCreated || 0);
-
-                if (mode === '-created_at') return bCreated - aCreated;
-                if (mode === 'created_at') return aCreated - bCreated;
-                if (mode === 'title') return collator.compare(aTitle, bTitle);
-                if (mode === '-title') return collator.compare(bTitle, aTitle);
-                return 0;
-            });
-
-            const frag = document.createDocumentFragment();
-            items.forEach(it => frag.appendChild(it));
-            container.innerHTML = '';
-            container.appendChild(frag);
-        }
-
-        function updateQueryAndReload({ q, sort } = {}) {
-            const params = new URLSearchParams(window.location.search);
-            if (q !== undefined) {
-                if (q && q.trim() !== '') params.set('q', q.trim());
-                else params.delete('q');
-            }
-            if (sort !== undefined) {
-                if (sort) params.set('sort', sort);
-                else params.delete('sort');
-            }
-            const queryString = params.toString();
-            const newUrl = window.location.pathname + (queryString ? ('?' + queryString) : '');
-            window.location.href = newUrl;
-        }
-
-        if (searchInput) {
-            searchInput.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    updateQueryAndReload({ q: searchInput.value });
-                }
-            });
-            searchInput.addEventListener('input', debounce(function () {
-                updateQueryAndReload({ q: searchInput.value });
-            }, 500));
-        }
-
-        function getEditorHTML(noteId, title, content, timestamp, hasReceipt) {
-            const isNewNote = !noteId;
-            return `
-            <div class="note-editor-view">
-                <div class="note-editor-container">
-                    <div class="editor-top-bar">
-                       
-                        ${!isNewNote && hasReceipt ? '<a href="/notes/proof/' + noteId + '/" class="on-chain-pill"><img src="' + STATIC_LOGOUT_ICON + '" alt="" /><span>On Blockchain</span></a>' : ''}
-                    </div>
-                    
-                    <div class="note-editor-header">
-                        <input type="text" id="note-editor-title" class="note-title-input" value="${title || ''}" placeholder="Your note title..." />
-                    </div>
-
-                    <div class="note-editor-toolbar">
-                        <div class="note-editor-meta">
-                            <span class="last-modified">Last modified: ${timestamp}</span>
-                        </div>
-                    </div>
-
-                    <div class="note-editor-body">
-                        <textarea id="note-editor-content" class="note-content-textarea" placeholder="Start typing your note...">${content || ''}</textarea>
-                    </div>
-
-                    <div class="editor-actions">
-                        <button id="save-note-btn" class="btn-save">Save Note</button>
-                        ${!isNewNote ? '<button id="delete-note-btn" class="btn-delete">Delete</button>' : '<button id="cancel-note-btn" class="btn-cancel">Cancel</button>'}
-                    </div>
-                </div>
-            </div>
-        `;
-        }
-
-        function renderEditor(noteId, title, content, timestamp, hasReceipt) {
-            mainEditorPane.innerHTML = getEditorHTML(noteId, title, content, timestamp, hasReceipt);
-            activeNoteId = noteId;
-
-            // Show editor, hide dashboard
-            notesDashboard.style.display = 'none';
-            mainEditorPane.style.display = 'flex';
-            mainEditorPane.classList.add('fullscreen');
-
-            attachEditorEventListeners();
+            document.getElementById('save-note-btn')?.addEventListener('click', saveNote);
+            document.getElementById('delete-note-btn')?.addEventListener('click', deleteNote);
+            document.getElementById('cancel-note-btn')?.addEventListener('click', closeEditor);
         }
 
         function closeEditor() {
-            // Hide editor, show dashboard
-            mainEditorPane.style.display = 'none';
-            mainEditorPane.classList.remove('fullscreen');
-            notesDashboard.style.display = 'flex';
-            activeNoteId = null;
+            editor.style.display = 'none';
+            editor.classList.remove('fullscreen');
+            dashboard.style.display = 'flex';
+            activeId = null;
         }
 
-        function attachEditorEventListeners() {
-            const saveBtn = document.getElementById('save-note-btn');
-            if (saveBtn) {
-                saveBtn.addEventListener('click', handleSaveNote);
-            }
+        function saveNote() {
+            const title = document.getElementById('note-editor-title').value.trim();
+            const content = document.getElementById('note-editor-content').value.trim();
+            const btn = document.getElementById('save-note-btn');
 
-            const deleteBtn = document.getElementById('delete-note-btn');
-            if (deleteBtn) {
-                deleteBtn.addEventListener('click', function () {
-                    if (!activeNoteId) return;
-                    if (!confirm('Are you sure you want to delete this note?')) return;
+            if (!title || !content) { showToast('Title and content required', 'error'); return; }
 
-                    fetch(`/notes/delete/${activeNoteId}/`, {
-                        method: 'POST',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        },
-                        body: `csrfmiddlewaretoken={{ csrf_token }}`
-                    })
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.success) {
-                                window.location.reload();
-                            } else {
-                                alert('Delete failed.');
+            btn.classList.add('loading'); btn.disabled = true;
+            const url = activeId ? `/notes/edit/${activeId}/` : CREATE_URL;
+            const fd = new FormData();
+            fd.append('title', title); fd.append('content', content); fd.append('csrfmiddlewaretoken', CSRF);
+
+            fetch(url, { method: 'POST', body: fd, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(r => r.json())
+                .then(data => {
+                    btn.classList.remove('loading'); btn.disabled = false;
+                    if (data.success) {
+                        if (!activeId) {
+                            const card = makeCard({ id: data.note_id, title, content, created_at: new Date().toISOString(), has_receipt: !!data.tx_hash });
+                            const empty = grid.querySelector('.empty-state-grid:not(.search-empty-state)');
+                            if (empty) empty.remove();
+                            grid.insertBefore(card, grid.firstChild);
+                            card.classList.add('fade-in');
+                        } else {
+                            const card = document.querySelector(`[data-note-id="${activeId}"]`);
+                            if (card) {
+                                card.dataset.noteTitle = title;
+                                card.dataset.noteContent = content;
+                                card.querySelector('.card-title').textContent = title;
+                                card.querySelector('.card-preview').textContent = trunc(content, 120);
                             }
-                        })
-                        .catch(() => alert('Delete failed.'));
-                });
-            }
-
-            // Cancel button handler (for new notes)
-            const cancelBtn = document.getElementById('cancel-note-btn');
-            if (cancelBtn) {
-                cancelBtn.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    closeEditor();
-                });
-            }
-
-            // Back button handler
-            const backBtn = document.getElementById('back-to-dashboard');
-            if (backBtn) {
-                backBtn.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    closeEditor();
-                });
-            }
+                        }
+                        closeEditor();
+                        showToast(data.message || 'Note saved!', 'success');
+                        updateCount();
+                    } else { showToast(data.error || 'Save failed', 'error'); }
+                })
+                .catch(() => { btn.classList.remove('loading'); btn.disabled = false; showToast('Save failed', 'error'); });
         }
 
-        function handleSaveNote() {
-            const title = document.getElementById('note-editor-title').value;
-            const content = document.getElementById('note-editor-content').value;
-            const url = activeNoteId ? `/notes/edit/${activeNoteId}/` : '{% url "notes:create_note" %}';
-            const formData = new FormData();
-            formData.append('title', title);
-            formData.append('content', content);
-            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        function deleteNote() {
+            if (!activeId || !confirm('Delete this note permanently?')) return;
+            const btn = document.getElementById('delete-note-btn');
+            btn.classList.add('loading'); btn.disabled = true;
+            const id = activeId;
 
-            fetch(url, { method: 'POST', body: formData, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                .then(res => res.json())
+            fetch(`/notes/delete/${id}/`, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `csrfmiddlewaretoken=${CSRF}`
+            })
+                .then(r => r.json())
                 .then(data => {
                     if (data.success) {
-                        window.location.reload();
-                    } else {
-                        alert('Error saving note.');
-                    }
-                });
+                        const card = document.querySelector(`[data-note-id="${id}"]`);
+                        if (card) { card.classList.add('fade-out'); setTimeout(() => { card.remove(); updateCount(); checkEmpty(); }, 300); }
+                        closeEditor();
+                        showToast('Note deleted', 'success');
+                    } else { btn.classList.remove('loading'); btn.disabled = false; showToast('Delete failed', 'error'); }
+                })
+                .catch(() => { btn.classList.remove('loading'); btn.disabled = false; showToast('Delete failed', 'error'); });
         }
 
-        // Card click handler - prevent opening editor when clicking action buttons
-        if (noteGridContainer) {
-            noteGridContainer.addEventListener('click', function (e) {
-                // Don't open editor if clicking on action buttons or color picker
-                if (e.target.closest('.card-actions') || e.target.closest('.color-picker-menu')) {
-                    return;
-                }
-
-                const noteCard = e.target.closest('.note-card');
-                if (noteCard) {
-                    document.querySelectorAll('.note-card').forEach(card => card.classList.remove('active'));
-                    noteCard.classList.add('active');
-
-                    renderEditor(
-                        noteCard.dataset.noteId,
-                        noteCard.dataset.noteTitle,
-                        noteCard.dataset.noteContent,
-                        noteCard.querySelector('.card-date').textContent,
-                        noteCard.dataset.noteHasReceipt === 'true'
-                    );
-                }
-            });
+        function makeCard(n) {
+            const d = document.createElement('div');
+            d.className = 'note-card color-' + (n.color || 'default');
+            d.dataset.noteId = n.id;
+            d.dataset.noteTitle = n.title;
+            d.dataset.noteContent = n.content;
+            d.dataset.noteCreated = n.created_at;
+            d.dataset.noteHasReceipt = n.has_receipt ? 'true' : 'false';
+            d.dataset.noteColor = n.color || 'default';
+            d.dataset.notePinned = n.is_pinned ? 'true' : 'false';
+            d.innerHTML = `<div class="card-actions">
+            <button class="action-btn pin-btn" data-note-id="${n.id}">📌</button>
+            <button class="action-btn archive-btn" data-note-id="${n.id}">📦</button>
+            <button class="action-btn trash-btn" data-note-id="${n.id}">🗑️</button>
+            <div class="color-picker-wrapper"><button class="action-btn color-btn" data-note-id="${n.id}">🎨</button>
+            <div class="color-picker-menu" data-note-id="${n.id}">
+                <button class="color-option" data-color="default" style="background:rgba(255,255,255,0.1)"></button>
+                <button class="color-option" data-color="red" style="background:#ff6b6b"></button>
+                <button class="color-option" data-color="blue" style="background:#4ecdc4"></button>
+                <button class="color-option" data-color="green" style="background:#95e1d3"></button>
+                <button class="color-option" data-color="yellow" style="background:#f9ca24"></button>
+                <button class="color-option" data-color="purple" style="background:#a29bfe"></button>
+            </div></div></div>
+            <div class="card-header"><h3 class="card-title">${esc(n.title)}</h3>${n.has_receipt ? '<span class="status-badge on-chain"><img src="' + ONCHAIN_ICON + '" alt=""/>On-chain</span>' : ''}</div>
+            <div class="card-body"><p class="card-preview">${esc(trunc(n.content, 120))}</p></div>
+            <div class="card-footer"><div class="card-tags"><span class="tag-pill">General</span></div><span class="card-date">Just now</span></div>`;
+            return d;
         }
 
-        if (newNoteBtn) {
-            newNoteBtn.addEventListener('click', function (e) {
-                e.preventDefault();
-                document.querySelectorAll('.note-card').forEach(card => card.classList.remove('active'));
-                renderEditor(null, 'New Note', '', 'Just now', false);
-            });
+        function updateCount() {
+            const el = document.getElementById('note-count');
+            if (el) { const c = document.querySelectorAll('.note-card:not(.fade-out)').length; el.textContent = c + ' note' + (c !== 1 ? 's' : ''); }
         }
 
-        // ESC key to close editor
+        function checkEmpty() {
+            if (!document.querySelectorAll('.note-card').length && !grid.querySelector('.empty-state-grid')) {
+                const e = document.createElement('div');
+                e.className = 'empty-state-grid';
+                e.innerHTML = '<div class="empty-state-icon-wrapper"><span style="font-size:40px">📝</span></div><h3>No notes yet</h3><p>Create your first note</p>';
+                grid.appendChild(e);
+            }
+        }
+
+        // Card click to open editor
+        grid?.addEventListener('click', function (e) {
+            if (e.target.closest('.card-actions') || e.target.closest('.color-picker-menu')) return;
+            const card = e.target.closest('.note-card');
+            if (card) {
+                openEditor(card.dataset.noteId, card.dataset.noteTitle, card.dataset.noteContent,
+                    card.querySelector('.card-date')?.textContent || 'Unknown', card.dataset.noteHasReceipt === 'true');
+            }
+        });
+
+        newBtn?.addEventListener('click', function (e) { e.preventDefault(); openEditor(null, '', '', 'Just now', false); });
+
         document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') {
-                // Check if editor is open
-                if (mainEditorPane.style.display !== 'none') {
-                    e.preventDefault();
-                    closeEditor();
-                }
-            }
-        });
-
-        // ==================== QUICK WINS FEATURES ====================
-
-        // PIN/UNPIN Handler
-        document.addEventListener('click', function (e) {
-            if (e.target.closest('.pin-btn')) {
-                e.stopPropagation();
-                const btn = e.target.closest('.pin-btn');
-                const noteId = btn.dataset.noteId;
-
-                fetch(`/notes/pin/${noteId}/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: `csrfmiddlewaretoken={{ csrf_token }}`
-                })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            window.location.reload();
-                        }
-                    })
-                    .catch(err => console.error('Pin failed:', err));
-            }
-        });
-
-        // ARCHIVE Handler
-        document.addEventListener('click', function (e) {
-            if (e.target.closest('.archive-btn')) {
-                e.stopPropagation();
-                const btn = e.target.closest('.archive-btn');
-                const noteId = btn.dataset.noteId;
-
-                fetch(`/notes/archive/${noteId}/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: `csrfmiddlewaretoken={{ csrf_token }}`
-                })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            window.location.reload();
-                        }
-                    })
-                    .catch(err => console.error('Archive failed:', err));
-            }
-        });
-
-        // TRASH Handler
-        document.addEventListener('click', function (e) {
-            if (e.target.closest('.trash-btn')) {
-                e.stopPropagation();
-                const btn = e.target.closest('.trash-btn');
-                const noteId = btn.dataset.noteId;
-
-                if (!confirm('Move this note to trash?')) return;
-
-                fetch(`/notes/trash/${noteId}/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: `csrfmiddlewaretoken={{ csrf_token }}`
-                })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            window.location.reload();
-                        }
-                    })
-                    .catch(err => console.error('Trash failed:', err));
-            }
-        });
-
-        // RESTORE Handler
-        document.addEventListener('click', function (e) {
-            if (e.target.closest('.restore-btn')) {
-                e.stopPropagation();
-                const btn = e.target.closest('.restore-btn');
-                const noteId = btn.dataset.noteId;
-
-                fetch(`/notes/restore/${noteId}/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: `csrfmiddlewaretoken={{ csrf_token }}`
-                })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            window.location.reload();
-                        }
-                    })
-                    .catch(err => console.error('Restore failed:', err));
-            }
-        });
-
-        // COLOR PICKER Toggle
-        document.addEventListener('click', function (e) {
-            if (e.target.closest('.color-btn')) {
-                e.stopPropagation();
-                const btn = e.target.closest('.color-btn');
-                const wrapper = btn.closest('.color-picker-wrapper');
-                const menu = wrapper.querySelector('.color-picker-menu');
-
-                // Close all other color pickers
-                document.querySelectorAll('.color-picker-menu').forEach(m => {
-                    if (m !== menu) m.classList.remove('show');
-                });
-
-                menu.classList.toggle('show');
-            }
-        });
-
-        // COLOR SELECTION Handler
-        document.addEventListener('click', function (e) {
-            if (e.target.closest('.color-option')) {
-                e.stopPropagation();
-                const option = e.target.closest('.color-option');
-                const color = option.dataset.color;
-                const menu = option.closest('.color-picker-menu');
-                const noteId = menu.dataset.noteId;
-
-                const formData = new FormData();
-                formData.append('color', color);
-                formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-
-                fetch(`/notes/color/${noteId}/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: formData
-                })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            // Update card color class
-                            const card = document.querySelector(`[data-note-id="${noteId}"]`);
-                            if (card) {
-                                card.className = card.className.replace(/color-\w+/, `color-${color}`);
-                            }
-                            menu.classList.remove('show');
-                        }
-                    })
-                    .catch(err => console.error('Color update failed:', err));
-            }
-        });
-
-        // Close color picker when clicking outside
-        document.addEventListener('click', function (e) {
-            if (!e.target.closest('.color-picker-wrapper')) {
-                document.querySelectorAll('.color-picker-menu').forEach(menu => {
-                    menu.classList.remove('show');
-                });
-            }
+            if (e.key === 'Escape' && editor.style.display !== 'none') { e.preventDefault(); closeEditor(); }
         });
 
         // Blockchain status polling
-        const statusText = document.getElementById('blockchain-status-text');
-        const glowingDot = document.querySelector('.glowing-dot');
-        function checkBlockchainStatus() {
-            fetch('{% url "notes:api_blockchain_status" %}')
-                .then(response => response.json())
-                .then(data => {
-                    if (statusText) {
-                        statusText.textContent = data.is_connected ? 'Chain Online' : 'Chain Offline';
-                    }
-                    if (glowingDot) {
-                        glowingDot.style.backgroundColor = data.is_connected ? '#00D9FF' : '#dc3545';
-                    }
-                })
-                .catch(err => {
-                    console.error('Blockchain status fetch failed', err);
-                });
+        function checkStatus() {
+            fetch(STATUS_URL).then(r => r.json()).then(d => {
+                const txt = document.getElementById('blockchain-status-text');
+                const dot = document.querySelector('.glowing-dot');
+                if (txt) txt.textContent = d.is_connected ? 'Chain Online' : 'Chain Offline';
+                if (dot) dot.style.backgroundColor = d.is_connected ? '#00D9FF' : '#dc3545';
+            }).catch(() => { });
         }
-        setInterval(checkBlockchainStatus, 5000);
-        checkBlockchainStatus();
+        setInterval(checkStatus, 5000);
+        checkStatus();
 
-        // Logout modal behavior
+        // Logout modal
         const logoutBtn = document.querySelector('.logout-button');
-        const logoutBackdrop = document.getElementById('logout-backdrop');
-        const cancelLogoutBtn = document.getElementById('cancel-logout-btn');
+        const logoutModal = document.getElementById('logout-backdrop');
+        const cancelLogout = document.getElementById('cancel-logout-btn');
 
-        function openLogoutModal() {
-            if (!logoutBackdrop) return;
-            logoutBackdrop.classList.add('visible');
-            logoutBackdrop.setAttribute('aria-hidden', 'false');
-            document.documentElement.style.overflow = 'hidden';
-            document.body.style.overflow = 'hidden';
-            const focusTarget = logoutBackdrop.querySelector('.btn-cancel, .btn-logout-confirm');
-            if (focusTarget) focusTarget.focus();
-        }
-
-        function closeLogoutModal() {
-            if (!logoutBackdrop) return;
-            logoutBackdrop.classList.remove('visible');
-            logoutBackdrop.setAttribute('aria-hidden', 'true');
-            document.documentElement.style.overflow = '';
-            document.body.style.overflow = '';
-            if (logoutBtn) logoutBtn.focus();
-        }
-
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', function (e) {
-                e.preventDefault();
-                openLogoutModal();
-            });
-        }
-
-        if (cancelLogoutBtn) {
-            cancelLogoutBtn.addEventListener('click', function (e) {
-                e.preventDefault();
-                closeLogoutModal();
-            });
-        }
-
-        if (logoutBackdrop) {
-            logoutBackdrop.addEventListener('click', function (e) {
-                if (e.target === logoutBackdrop) closeLogoutModal();
-            });
-        }
-    });
+        logoutBtn?.addEventListener('click', function (e) { e.preventDefault(); logoutModal?.classList.add('visible'); });
+        cancelLogout?.addEventListener('click', function () { logoutModal?.classList.remove('visible'); });
+        logoutModal?.addEventListener('click', function (e) { if (e.target === logoutModal) logoutModal.classList.remove('visible'); });
+    })();
 </script>
 {% endblock %}
