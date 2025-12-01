@@ -1,5 +1,16 @@
 from django.db import migrations
+from django.db import connection
 
+def drop_extra_columns(apps, schema_editor):
+    # Only run this on MySQL
+    if connection.vendor == 'mysql':
+        with connection.cursor() as cursor:
+            columns = ['color', 'is_archived', 'is_deleted', 'is_pinned', 'archived_at', 'deleted_at', 'pinned_at']
+            for col in columns:
+                # Check if column exists before dropping
+                cursor.execute(f"SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name='notes_note' AND column_name='{col}' AND table_schema=DATABASE()")
+                if cursor.fetchone()[0] > 0:
+                    cursor.execute(f"ALTER TABLE notes_note DROP COLUMN {col}")
 
 class Migration(migrations.Migration):
     """
@@ -15,34 +26,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # Drop each column separately - MySQL doesn't support multiple IF EXISTS in one ALTER
-        migrations.RunSQL(
-            sql="SET @drop_col = IF((SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name='notes_note' AND column_name='color' AND table_schema=DATABASE()) > 0, 'ALTER TABLE notes_note DROP COLUMN color', 'SELECT 1'); PREPARE stmt FROM @drop_col; EXECUTE stmt;",
-            reverse_sql=migrations.RunSQL.noop
-        ),
-        migrations.RunSQL(
-            sql="SET @drop_col = IF((SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name='notes_note' AND column_name='is_archived' AND table_schema=DATABASE()) > 0, 'ALTER TABLE notes_note DROP COLUMN is_archived', 'SELECT 1'); PREPARE stmt FROM @drop_col; EXECUTE stmt;",
-            reverse_sql=migrations.RunSQL.noop
-        ),
-        migrations.RunSQL(
-            sql="SET @drop_col = IF((SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name='notes_note' AND column_name='is_deleted' AND table_schema=DATABASE()) > 0, 'ALTER TABLE notes_note DROP COLUMN is_deleted', 'SELECT 1'); PREPARE stmt FROM @drop_col; EXECUTE stmt;",
-            reverse_sql=migrations.RunSQL.noop
-        ),
-        migrations.RunSQL(
-            sql="SET @drop_col = IF((SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name='notes_note' AND column_name='is_pinned' AND table_schema=DATABASE()) > 0, 'ALTER TABLE notes_note DROP COLUMN is_pinned', 'SELECT 1'); PREPARE stmt FROM @drop_col; EXECUTE stmt;",
-            reverse_sql=migrations.RunSQL.noop
-        ),
-        migrations.RunSQL(
-            sql="SET @drop_col = IF((SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name='notes_note' AND column_name='archived_at' AND table_schema=DATABASE()) > 0, 'ALTER TABLE notes_note DROP COLUMN archived_at', 'SELECT 1'); PREPARE stmt FROM @drop_col; EXECUTE stmt;",
-            reverse_sql=migrations.RunSQL.noop
-        ),
-        migrations.RunSQL(
-            sql="SET @drop_col = IF((SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name='notes_note' AND column_name='deleted_at' AND table_schema=DATABASE()) > 0, 'ALTER TABLE notes_note DROP COLUMN deleted_at', 'SELECT 1'); PREPARE stmt FROM @drop_col; EXECUTE stmt;",
-            reverse_sql=migrations.RunSQL.noop
-        ),
-        migrations.RunSQL(
-            sql="SET @drop_col = IF((SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name='notes_note' AND column_name='pinned_at' AND table_schema=DATABASE()) > 0, 'ALTER TABLE notes_note DROP COLUMN pinned_at', 'SELECT 1'); PREPARE stmt FROM @drop_col; EXECUTE stmt;",
-            reverse_sql=migrations.RunSQL.noop
-        ),
+        migrations.RunPython(drop_extra_columns, reverse_code=migrations.RunPython.noop),
     ]
 
